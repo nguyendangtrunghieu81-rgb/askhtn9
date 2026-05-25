@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KHTN 9 - Bài 10: Kính lúp (Mức 3)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; }
+    .katex { font-size: 1.03em; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+const IconBase = ({ size = 24, className = '', children }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Trophy = (p) => <IconBase {...p}><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M5 5H3v2a4 4 0 0 0 4 4"/><path d="M19 5h2v2a4 4 0 0 1-4 4"/></IconBase>;
+const BookOpen = (p) => <IconBase {...p}><path d="M2 4h7a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-7a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h8z"/></IconBase>;
+const Clock = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></IconBase>;
+const User = (p) => <IconBase {...p}><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></IconBase>;
+const ShieldCheck = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+const Play = (p) => <IconBase {...p}><path d="m8 5 11 7-11 7z"/></IconBase>;
+const CheckCircle2 = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+const XCircle = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></IconBase>;
+const AlertCircle = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></IconBase>;
+const ImageIcon = (p) => <IconBase {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.5-3.5L10 19"/></IconBase>;
+const ArrowRight = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+const LogOut = (p) => <IconBase {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></IconBase>;
+const FileText = (p) => <IconBase {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></IconBase>;
+const CheckSquare = (p) => <IconBase {...p}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></IconBase>;
+const RefreshCcw = (p) => <IconBase {...p}><path d="M21 12a9 9 0 0 0-15-6.7L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15 6.7L21 16"/><path d="M21 21v-5h-5"/></IconBase>;
+const Trash2 = (p) => <IconBase {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></IconBase>;
+const AlertTriangle = (p) => <IconBase {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconBase>;
+
+// Firebase stubs for standalone HTML preview. Replace with real Firebase imports in a bundled environment if needed.
+const initializeApp = () => { throw new Error('Firebase preview mode'); };
+const getAuth = () => null;
+const signInAnonymously = async () => {};
+const onAuthStateChanged = () => () => {};
+const signInWithCustomToken = async () => {};
+const getFirestore = () => null;
+const collection = () => null;
+const addDoc = async () => {};
+const onSnapshot = () => () => {};
+const serverTimestamp = () => new Date();
+const doc = () => null;
+const deleteDoc = async () => {};
+
+// --- DATA: CÂU HỎI MỨC ĐỘ 3 (VẬN DỤNG CAO) - BÀI 10 ---
+const quizData = [
+  // Trắc nghiệm
+  {
+    id: 1, type: 'tracnghiem',
+    text: "Một kính lúp có tiêu cự $f = 10 \\text{ cm}$. Số bội giác của kính là:",
+    options: [
+      "A. $2,5\\text{X}$.",
+      "B. $5\\text{X}$.",
+      "C. $10\\text{X}$.",
+      "D. $25\\text{X}$."
+    ],
+    correctOption: 0,
+    answerText: "A. $2,5\\text{X}$.",
+    explanation: "Áp dụng công thức tính số bội giác: $G = \\frac{25}{f} = \\frac{25}{10} = 2,5$."
+  },
+  {
+    id: 2, type: 'tracnghiem',
+    text: "Một kính lúp có số bội giác $G = 10$. Tiêu cự của kính là:",
+    options: [
+      "A. $2,5 \\text{ cm}$.",
+      "B. $5 \\text{ cm}$.",
+      "C. $10 \\text{ cm}$.",
+      "D. $25 \\text{ cm}$."
+    ],
+    correctOption: 0,
+    answerText: "A. $2,5 \\text{ cm}$.",
+    explanation: "Từ công thức $G = \\frac{25}{f}$, suy ra tiêu cự $f = \\frac{25}{G} = \\frac{25}{10} = 2,5 \\text{ cm}$."
+  },
+  {
+    id: 3, type: 'tracnghiem',
+    text: "Một thấu kính hội tụ cho ảnh thật, ngược chiều và cao bằng vật. Khi đó vật đặt cách thấu kính một khoảng:",
+    options: [
+      "A. $f$.",
+      "B. $2f$.",
+      "C. nhỏ hơn $f$.",
+      "D. rất xa thấu kính."
+    ],
+    correctOption: 1,
+    answerText: "B. $2f$.",
+    explanation: "Với thấu kính hội tụ, khi vật sáng đặt tại vị trí $d = 2f$, ảnh thu được sẽ là ảnh thật, ngược chiều và cao bằng vật."
+  },
+  {
+    id: 4, type: 'tracnghiem',
+    text: "Khi đo tiêu cự thấu kính hội tụ theo phương pháp Silbermann, khoảng cách giữa vật và ảnh là $80 \\text{ cm}$. Tiêu cự của thấu kính là:",
+    options: [
+      "A. $10 \\text{ cm}$.",
+      "B. $20 \\text{ cm}$.",
+      "C. $40 \\text{ cm}$.",
+      "D. $80 \\text{ cm}$."
+    ],
+    correctOption: 1,
+    answerText: "B. $20 \\text{ cm}$.",
+    explanation: "Theo nguyên lí phương pháp Silbermann (vật và ảnh cao bằng nhau), khoảng cách giữa vật và ảnh trên màn là $L = 4f$. Do đó $4f = 80 \\Rightarrow f = 20 \\text{ cm}$."
+  },
+  {
+    id: 5, type: 'tracnghiem',
+    text: "Vật cao $h = 3 \\text{ cm}$, ảnh cao $h' = 6 \\text{ cm}$. Độ phóng đại của ảnh là:",
+    options: [
+      "A. $0,5$.",
+      "B. $2$.",
+      "C. $3$.",
+      "D. $6$."
+    ],
+    correctOption: 1,
+    answerText: "B. $2$.",
+    explanation: "Độ lớn độ phóng đại của ảnh được tính bằng $k = \\frac{h'}{h} = \\frac{6}{3} = 2$."
+  },
+  // Đúng/Sai
+  {
+    id: 6, type: 'dungsai',
+    text: "Một kính lúp có tiêu cự $f = 5 \\text{ cm}$ thì số bội giác của kính là $G = 5$.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Áp dụng công thức $G = \\frac{25}{f} = \\frac{25}{5} = 5$."
+  },
+  {
+    id: 7, type: 'dungsai',
+    text: "Kính lúp có tiêu cự càng ngắn thì số bội giác của nó càng nhỏ.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Do $G = \\frac{25}{f}$, $G$ tỉ lệ nghịch với $f$. Kính có tiêu cự càng ngắn thì số bội giác càng LỚN."
+  },
+  {
+    id: 8, type: 'dungsai',
+    text: "Trong phương pháp đo tiêu cự Silbermann, khoảng cách giữa vật và màn ảnh lúc thu được ảnh rõ nét cao bằng vật là $2f$.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Khi vật và ảnh cao bằng nhau, vật cách thấu kính $2f$, ảnh cách thấu kính $2f$ (khác phía). Khoảng cách giữa vật và ảnh phải là $4f$."
+  },
+  {
+    id: 9, type: 'dungsai',
+    text: "Theo quy ước dấu của các đại lượng trong công thức thấu kính, ảnh thật có $d' < 0$.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Theo quy ước, ảnh thật được tạo ra bởi thấu kính tương ứng với $d' > 0$, còn ảnh ảo tương ứng với $d' < 0$."
+  },
+  {
+    id: 10, type: 'dungsai',
+    text: "Nếu độ phóng đại $k > 0$, ta có thể kết luận vật và ảnh cùng chiều nhau.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Theo định nghĩa về độ phóng đại đại số, $k > 0$ ứng với vật và ảnh cùng chiều (thường là ảnh ảo), và $k < 0$ ứng với vật và ảnh ngược chiều (thường là ảnh thật)."
+  },
+  // Tự luận
+  {
+    id: 11, type: 'tuluan', 
+    text: "Một kính lúp có tiêu cự $f = 5 \\text{ cm}$. Tính số bội giác của kính.",
+    answerText: "$G = \\frac{25}{f} = \\frac{25}{5} = 5$. Vậy số bội giác của kính là $5\\text{X}$.",
+    explanation: "Sử dụng công thức tính số bội giác $G = \\frac{25}{f}$ (với $f$ đo bằng $\\text{cm}$)."
+  },
+  {
+    id: 12, type: 'tuluan', 
+    text: "Một kính lúp có ghi $10\\text{X}$. Tính tiêu cự của kính.",
+    answerText: "Kính ghi $10\\text{X}$ nên $G = 10$. Suy ra $f = \\frac{25}{G} = \\frac{25}{10} = 2,5 \\text{ cm}$.",
+    explanation: "Từ công thức số bội giác $G = \\frac{25}{f}$, ta biến đổi thành $f = \\frac{25}{G}$."
+  },
+  {
+    id: 13, type: 'tuluan', 
+    text: "So sánh hai kính lúp có tiêu cự $f_1 = 5 \\text{ cm}$ và $f_2 = 10 \\text{ cm}$. Kính nào có số bội giác lớn hơn?",
+    answerText: "$G_1 = \\frac{25}{5} = 5$; $G_2 = \\frac{25}{10} = 2,5$. Vì $G_1 > G_2$, kính có tiêu cự $5 \\text{ cm}$ có số bội giác lớn hơn.",
+    explanation: "Có thể tính trực tiếp hoặc suy luận: tiêu cự nhỏ hơn thì số bội giác lớn hơn."
+  },
+  {
+    id: 14, type: 'tuluan', 
+    text: "Trong phương pháp đo tiêu cự Silbermann, khoảng cách giữa vật và ảnh là $100 \\text{ cm}$. Tính tiêu cự của thấu kính hội tụ.",
+    answerText: "Khoảng cách giữa vật và ảnh trong trường hợp này bằng $4f$. Do đó $4f = 100 \\text{ cm} \\Rightarrow f = \\frac{100}{4} = 25 \\text{ cm}$.",
+    explanation: "Vận dụng tính chất: khi ảnh thật cao bằng vật, $L_{\\text{min}} = 4f$."
+  },
+  {
+    id: 15, type: 'tuluan', 
+    text: "Một vật cao $h = 4 \\text{ cm}$ qua thấu kính cho ảnh cao $h' = 8 \\text{ cm}$. Tính độ phóng đại của ảnh và cho biết ảnh lớn gấp mấy lần vật.",
+    answerText: "Độ phóng đại $k = \\frac{h'}{h} = \\frac{8}{4} = 2$. Vậy ảnh lớn gấp $2$ lần vật.",
+    explanation: "Áp dụng định nghĩa tỉ số độ cao ảnh trên độ cao vật: $k = \\frac{h'}{h}$."
+  }
+];
+
+// --- FIREBASE INITIALIZATION ---
+let app, auth, db, appId;
+try {
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  appId = typeof __app_id !== 'undefined' ? __app_id : 'khtn9-light-quiz-b10-lvl3';
+} catch (error) {
+  console.warn("Firebase initialization skipped (expected in non-preview env)");
+}
+
+// Tên collection lưu trữ 
+const DB_COLLECTION_NAME = 'khtn9_quiz_results_b10_lvl3_adv';
+
+// --- COMPONENTS ---
+
+const ImagePlaceholder = ({ note }) => (
+  <div className="w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-6 my-4 flex flex-col items-center justify-center text-slate-500">
+    <ImageIcon size={32} className="mb-2 opacity-50" />
+    <span className="text-sm font-medium text-center">Khu vực chèn hình ảnh minh họa</span>
+    <span className="text-xs text-center mt-1 italic">[{note}]</span>
+    {/* TODO: Add <img> tag here when images are available */}
+  </div>
+);
+
+const MathText = ({ text }) => {
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    const renderMath = () => {
+      if (window.renderMathInElement && containerRef.current) {
+        window.renderMathInElement(containerRef.current, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    };
+
+    renderMath();
+    window.addEventListener('katex-ready', renderMath);
+    setTimeout(renderMath, 250);
+    return () => window.removeEventListener('katex-ready', renderMath);
+  }, [text]);
+
+  return <span ref={containerRef}>{text || ''}</span>;
+};
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [appState, setAppState] = useState('intro'); // intro, form, quiz, result, teacherAuth, teacherBoard
+  const [studentInfo, setStudentInfo] = useState({ name: '', class: '', school: '' });
+  const [answers, setAnswers] = useState({});
+  const [elapsedTime, setElapsedTime] = useState(0); // Bộ đếm thời gian làm bài (tính bằng giây)
+  const [score, setScore] = useState(0);
+  const [teacherPwd, setTeacherPwd] = useState('');
+  const [teacherError, setTeacherError] = useState('');
+  const [resultsData, setResultsData] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Custom Modal Delete State
+  const [deleteTarget, setDeleteTarget] = useState(null); // 'all' hoặc recordId
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load KaTeX for Physics/Math formatting
+  useEffect(() => {
+    const fireReady = () => window.dispatchEvent(new Event('katex-ready'));
+    if (window.renderMathInElement) fireReady();
+    const timer = setTimeout(fireReady, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Firebase Auth
+  useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth error", e);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let timer;
+    if (appState === 'quiz') {
+      timer = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [appState]);
+
+  // Handle Form Input
+  const handleStartQuiz = (e) => {
+    e.preventDefault();
+    if (studentInfo.name && studentInfo.class && studentInfo.school) {
+      setAnswers({});
+      setElapsedTime(0);
+      setAppState('quiz');
+    }
+  };
+
+  const handleAnswerSelect = (qId, value) => {
+    setAnswers(prev => ({ ...prev, [qId]: value }));
+  };
+
+  const calculateScore = () => {
+    let points = 0;
+    quizData.forEach(q => {
+      if (q.type === 'tracnghiem' || q.type === 'dungsai') {
+        if (answers[q.id] === q.correctOption) points += 1;
+      }
+    });
+    return points;
+  };
+
+  const isAllAnswered = useMemo(() => {
+    return Object.keys(answers).length === quizData.length;
+  }, [answers]);
+
+  const handleSubmitQuiz = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const finalScore = calculateScore();
+    setScore(finalScore);
+    
+    // Save to Firebase
+    if (user && db) {
+      try {
+        const timeSpent = elapsedTime;
+        const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+        await addDoc(resultsRef, {
+          studentName: studentInfo.name,
+          studentClass: studentInfo.class,
+          studentSchool: studentInfo.school,
+          score: finalScore,
+          timeSpent: timeSpent,
+          answers: answers,
+          timestamp: serverTimestamp(),
+          userId: user.uid
+        });
+      } catch (err) {
+        console.error("Error saving result", err);
+      }
+    }
+    
+    setAppState('result');
+    setIsSubmitting(false);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Teacher Auth
+  const handleTeacherLogin = (e) => {
+    e.preventDefault();
+    if (teacherPwd === 'admin') {
+      setAppState('teacherBoard');
+      setTeacherError('');
+    } else {
+      setTeacherError('Mật khẩu không chính xác!');
+    }
+  };
+
+  // Fetch Teacher Data
+  useEffect(() => {
+    if (appState === 'teacherBoard' && user && db) {
+      const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+      const unsubscribe = onSnapshot(resultsRef, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort in memory (Rule 2)
+        data.sort((a, b) => {
+           const timeA = a.timestamp?.toMillis() || 0;
+           const timeB = b.timestamp?.toMillis() || 0;
+           return timeB - timeA;
+        });
+        setResultsData(data);
+      }, (err) => console.error(err));
+      return () => unsubscribe();
+    }
+  }, [appState, user]);
+
+  // Execute Delete
+  const confirmDelete = async () => {
+    if (!user || !db || !deleteTarget) return;
+    setIsDeleting(true);
+    
+    try {
+      if (deleteTarget === 'all') {
+        const promises = resultsData.map(res => 
+          deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, res.id))
+        );
+        await Promise.all(promises);
+      } else {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, deleteTarget));
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa dữ liệu:", error);
+    }
+    
+    setIsDeleting(false);
+    setDeleteTarget(null);
+  };
+
+
+  // --- RENDERERS ---
+
+  if (appState === 'intro') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-indigo-600 p-8 text-center text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-20">
+              <BookOpen size={100} />
+            </div>
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-amber-300" />
+            <h1 className="text-3xl font-extrabold mb-2 relative z-10">Đấu Trường Tri Thức</h1>
+            <p className="text-indigo-100 text-lg relative z-10">Chủ đề: Ánh Sáng - KHTN 9</p>
+            <p className="bg-white/20 inline-block px-3 py-1 rounded-full text-indigo-50 text-sm mt-2 font-medium relative z-10 border border-white/30">
+              Bài 10: Kính lúp (Mức 3 - Vận dụng cao)
+            </p>
+          </div>
+          
+          <div className="p-8 text-center space-y-6">
+            <p className="text-slate-600">
+              Chào mừng bạn đến với hệ thống ôn tập tương tác. Hãy vận dụng trí nhớ và kiến thức vật lý nền tảng để vượt qua 15 thử thách nâng cao!
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <FileText className="text-indigo-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">15 Câu hỏi</p>
+                  <p className="text-xs text-slate-500">Trắc nghiệm & Tự luận</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <Clock className="text-amber-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">Tự do</p>
+                  <p className="text-xs text-slate-500">Không giới hạn thời gian</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col space-y-3">
+              <button 
+                onClick={() => setAppState('form')}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all flex justify-center items-center"
+              >
+                Vào Thi Ngay <ArrowRight className="ml-2" />
+              </button>
+              <button 
+                onClick={() => setAppState('teacherAuth')}
+                className="w-full bg-white hover:bg-slate-50 text-slate-600 font-medium py-3 px-8 rounded-xl border border-slate-200 transition-all flex justify-center items-center"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" /> Chế độ Giáo viên
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'form') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          <div className="text-center mb-6">
+            <User className="w-12 h-12 text-indigo-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-slate-800">Thông tin thí sinh</h2>
+            <p className="text-slate-500 text-sm">Vui lòng điền đầy đủ thông tin để bắt đầu</p>
+          </div>
+          
+          <form onSubmit={handleStartQuiz} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Họ và tên</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.name}
+                onChange={e => setStudentInfo({...studentInfo, name: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: Nguyễn Văn A"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Lớp</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.class}
+                onChange={e => setStudentInfo({...studentInfo, class: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: 9A1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Trường</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.school}
+                onChange={e => setStudentInfo({...studentInfo, school: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: THCS Lê Quý Đôn"
+              />
+            </div>
+            <div className="pt-4 flex gap-3">
+              <button 
+                type="button"
+                onClick={() => setAppState('intro')}
+                className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại
+              </button>
+              <button 
+                type="submit"
+                className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center"
+              >
+                <Play className="w-4 h-4 mr-2 fill-current" /> Bắt đầu
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'quiz') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-24">
+        {/* Header / Timer */}
+        <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
+          <div>
+            <p className="font-bold text-indigo-800 hidden sm:block">Đấu Trường Tri Thức</p>
+            <p className="text-xs text-slate-500 font-medium">{studentInfo.name} - {studentInfo.class}</p>
+          </div>
+          <div className="flex items-center px-4 py-1.5 rounded-full font-mono text-lg font-bold bg-indigo-100 text-indigo-700">
+            <Clock className="w-5 h-5 mr-2" />
+            {formatTime(elapsedTime)}
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto p-4 mt-6 space-y-6">
+          {quizData.map((q, index) => (
+            <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-100 px-4 sm:px-6 py-3 flex justify-between items-center">
+                <span className="font-bold text-slate-700">Câu {index + 1}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-200 text-slate-600 uppercase">
+                  {q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}
+                </span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <p className="text-base sm:text-lg text-slate-800 font-medium mb-4 leading-relaxed"><MathText text={q.text} /></p>
+                
+                {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+
+                {/* Tự Luận */}
+                {q.type === 'tuluan' && (
+                  <textarea 
+                    value={answers[q.id] || ''}
+                    onChange={(e) => handleAnswerSelect(q.id, e.target.value)}
+                    placeholder="Nhập câu trả lời của bạn vào đây..."
+                    className="w-full h-24 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-slate-700"
+                  ></textarea>
+                )}
+
+                {/* Trắc Nghiệm */}
+                {q.type === 'tracnghiem' && (
+                  <div className="space-y-3">
+                    {q.options.map((opt, i) => (
+                      <label 
+                        key={i} 
+                        className={`flex items-center p-3 sm:p-4 rounded-xl border cursor-pointer transition-all ${answers[q.id] === i ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'border-slate-200 hover:bg-slate-50'}`}
+                      >
+                        <input 
+                          type="radio" 
+                          name={`q-${q.id}`} 
+                          className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                          checked={answers[q.id] === i}
+                          onChange={() => handleAnswerSelect(q.id, i)}
+                        />
+                        <span className="ml-3 text-slate-700"><MathText text={opt} /></span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Đúng / Sai */}
+                {q.type === 'dungsai' && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Đúng')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Đúng' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Đúng
+                    </button>
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Sai')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Sai' ? 'bg-red-50 border-red-500 text-red-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Sai
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-3 sm:p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="text-sm sm:text-base text-slate-600 font-medium">
+              Đã trả lời: <span className="text-indigo-600 font-bold">{Object.keys(answers).length}</span> / {quizData.length}
+            </div>
+            <button
+              onClick={handleSubmitQuiz}
+              disabled={!isAllAnswered || isSubmitting}
+              className={`px-5 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold flex items-center transition-all ${isAllAnswered && !isSubmitting ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+            >
+              {isSubmitting ? 'Đang nộp...' : <span className="flex items-center">Nộp Bài <span className="hidden sm:inline">&nbsp;Ngay</span></span>} <CheckSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'result') {
+    const timeSpentSeconds = elapsedTime;
+    const isGoodScore = score >= 8;
+
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-12">
+        <div className="bg-indigo-600 text-white pt-12 pb-24 px-4 text-center rounded-b-[3rem] shadow-xl">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Kết quả của bạn</h1>
+          <p className="text-indigo-200">{studentInfo.name} - Lớp {studentInfo.class}</p>
+        </div>
+
+        <div className="max-w-3xl mx-auto -mt-16 px-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-around mb-8 border border-slate-100">
+            <div className="text-center mb-6 sm:mb-0">
+              <p className="text-slate-500 font-medium mb-1">Điểm trắc nghiệm</p>
+              <div className="flex items-end justify-center">
+                <span className={`text-6xl font-extrabold ${isGoodScore ? 'text-green-500' : 'text-amber-500'}`}>{score}</span>
+                <span className="text-2xl text-slate-400 mb-1 ml-1">/10</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">*Tự luận chờ GV chấm</p>
+            </div>
+            <div className="h-16 w-px bg-slate-200 hidden sm:block"></div>
+            <div className="text-center">
+              <p className="text-slate-500 font-medium mb-1">Thời gian</p>
+              <span className="text-3xl font-bold text-slate-700">{formatTime(timeSpentSeconds)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center mb-8">
+             <button 
+                onClick={() => {
+                  setAnswers({});
+                  setAppState('intro');
+                }}
+                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 px-6 rounded-xl flex items-center transition-all"
+             >
+                <RefreshCcw className="w-5 h-5 mr-2" /> Thi lại (Cải thiện điểm)
+             </button>
+          </div>
+
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+            <BookOpen className="text-indigo-500 mr-2" /> ĐÁP ÁN CHI TIẾT
+          </h3>
+
+          <div className="space-y-6">
+            {quizData.map((q, index) => {
+              const isObj = q.type === 'tracnghiem' || q.type === 'dungsai';
+              const isCorrect = isObj && answers[q.id] === q.correctOption;
+              const studentAnswerStr = q.type === 'tracnghiem' && answers[q.id] !== undefined ? q.options[answers[q.id]] : answers[q.id];
+
+              return (
+                <div key={q.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isObj ? (isCorrect ? 'border-green-300' : 'border-red-300') : 'border-blue-300'}`}>
+                  <div className={`px-4 py-2 font-medium flex items-center justify-between text-sm ${isObj ? (isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800') : 'bg-blue-50 text-blue-800'}`}>
+                    <span>Câu {index + 1}: <span className="hidden sm:inline">{q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}</span></span>
+                    {isObj ? (
+                      isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <span className="bg-blue-200 text-blue-800 px-2 py-0.5 rounded text-xs">Chờ chấm</span>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 sm:p-5">
+                    <p className="text-sm sm:text-base text-slate-800 font-medium mb-3"><MathText text={q.text} /></p>
+                    {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+                    
+                    <div className="mb-4 bg-slate-50 p-3 rounded border border-slate-100">
+                      <p className="text-sm text-slate-500 mb-1">Bài làm của bạn:</p>
+                      <p className={`font-medium ${isObj ? (isCorrect ? 'text-green-600' : 'text-red-600') : 'text-slate-700'}`}>
+                        {studentAnswerStr ? <MathText text={studentAnswerStr} /> : <span className="italic text-slate-400">Không có câu trả lời</span>}
+                      </p>
+                    </div>
+
+                    <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100">
+                      <p className="text-sm text-indigo-800 font-bold mb-1">Đáp án gợi ý / Chính xác:</p>
+                      <p className="font-medium text-slate-800 mb-3"><MathText text={q.answerText} /></p>
+                      
+                      <div className="flex items-start">
+                         <AlertCircle className="w-4 h-4 text-amber-500 mr-2 mt-0.5 shrink-0" />
+                         <p className="text-sm text-slate-600"><span className="font-semibold text-slate-700">Giải thích:</span> <MathText text={q.explanation} /></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER MODE AUTH
+  if (appState === 'teacherAuth') {
+    return (
+      <div className="min-h-screen bg-slate-800 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 text-slate-300">
+          <div className="text-center mb-6">
+            <ShieldCheck className="w-12 h-12 text-teal-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-white">Chế Độ Giáo Viên</h2>
+            <p className="text-slate-400 text-sm">Vui lòng nhập mật khẩu quản trị viên</p>
+          </div>
+          
+          <form onSubmit={handleTeacherLogin} className="space-y-4">
+            <div>
+              <input 
+                type="password" 
+                value={teacherPwd}
+                onChange={e => setTeacherPwd(e.target.value)}
+                className="w-full bg-slate-800 px-4 py-3 rounded-lg border border-slate-600 text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                placeholder="Mật khẩu (admin)"
+              />
+              {teacherError && <p className="text-red-400 text-sm mt-2 text-center">{teacherError}</p>}
+            </div>
+            
+            <div className="pt-2 flex flex-col space-y-3">
+              <button 
+                type="submit"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all"
+              >
+                Đăng nhập hệ thống
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setAppState('intro'); setTeacherPwd(''); setTeacherError(''); }}
+                className="w-full bg-transparent hover:bg-slate-800 text-slate-400 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại giao diện học sinh
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER DASHBOARD
+  if (appState === 'teacherBoard') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans relative">
+        
+        {/* Custom Confirm Modal (Phục vụ việc Xóa không dùng window.confirm) */}
+        {deleteTarget && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-opacity">
+             <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center text-red-600 mb-4">
+                   <AlertTriangle className="w-8 h-8 mr-3" />
+                   <h3 className="text-xl font-bold text-slate-800">Xác nhận xóa</h3>
+                </div>
+                <p className="text-slate-600 mb-8 leading-relaxed">
+                  {deleteTarget === 'all' 
+                    ? 'Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu bài làm của học sinh không? Hành động này không thể hoàn tác.' 
+                    : 'Bạn có chắc chắn muốn xóa bài làm của học sinh này khỏi hệ thống không?'}
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button 
+                    onClick={() => setDeleteTarget(null)} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button 
+                    onClick={confirmDelete} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md shadow-red-500/20 transition-all flex items-center"
+                  >
+                    {isDeleting ? 'Đang xóa...' : 'Xóa dữ liệu'}
+                  </button>
+                </div>
+             </div>
+          </div>
+        )}
+
+        <div className="bg-slate-900 text-white p-4 sm:p-6 shadow-md flex justify-between items-center sticky top-0 z-40">
+          <div className="flex items-center">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400 mr-3" />
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold">Bảng Điều Khiển Giáo Viên</h1>
+              <p className="text-[10px] sm:text-xs text-slate-400">Hệ thống lượng giá KHTN 9 - Bài 10 (Mức 3)</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setAppState('intro')}
+            className="flex items-center px-3 sm:px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+          >
+            <LogOut className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Thoát</span>
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-lg font-bold text-slate-800">Thống kê bài làm học sinh (Vận dụng cao)</h2>
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <span className="bg-teal-100 text-teal-800 px-3 py-1.5 rounded-lg text-sm font-bold border border-teal-200">
+                  Tổng cộng: {resultsData.length} lượt
+                </span>
+                {resultsData.length > 0 && (
+                  <button 
+                    onClick={() => setDeleteTarget('all')}
+                    className="flex items-center px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-semibold transition-colors border border-red-200"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Xóa tất cả
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600 text-sm border-b border-slate-200">
+                    <th className="p-4 font-semibold">Thời gian nộp</th>
+                    <th className="p-4 font-semibold">Họ Tên</th>
+                    <th className="p-4 font-semibold">Lớp</th>
+                    <th className="p-4 font-semibold">Trường</th>
+                    <th className="p-4 font-semibold text-center">Điểm</th>
+                    <th className="p-4 font-semibold text-center">Thời gian làm</th>
+                    <th className="p-4 font-semibold text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {resultsData.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-12 text-center text-slate-500">
+                        <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                        Chưa có dữ liệu bài làm nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    resultsData.map((res, i) => (
+                      <tr key={res.id || i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                        <td className="p-4 text-slate-500">
+                          {res.timestamp ? new Date(res.timestamp.toMillis()).toLocaleString('vi-VN') : 'Đang tải...'}
+                        </td>
+                        <td className="p-4 font-bold text-slate-800">{res.studentName}</td>
+                        <td className="p-4 text-slate-700">{res.studentClass}</td>
+                        <td className="p-4 text-slate-600">{res.studentSchool}</td>
+                        <td className="p-4 text-center">
+                           <span className={`font-bold px-2.5 py-1 rounded-md ${res.score >= 8 ? 'bg-green-100 text-green-700' : res.score >= 5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                             {res.score}/10
+                           </span>
+                        </td>
+                        <td className="p-4 text-center font-mono text-slate-500">
+                          {formatTime(res.timeSpent)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <button 
+                            onClick={() => setDeleteTarget(res.id)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa bài làm này"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => window.dispatchEvent(new Event('katex-ready')), 200);
+});
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

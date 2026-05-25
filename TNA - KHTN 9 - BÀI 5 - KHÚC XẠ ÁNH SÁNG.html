@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thí nghiệm ảo: Khúc xạ ánh sáng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel (Dịch JSX sang JS) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body {
+        background:
+          radial-gradient(circle at 10% 0%, rgba(125, 211, 252, 0.30), transparent 34%),
+          radial-gradient(circle at 92% 8%, rgba(129, 140, 248, 0.20), transparent 30%),
+          linear-gradient(135deg, #f8fafc 0%, #eef6ff 55%, #dbeafe 100%);
+      }
+      .app-bg {
+        background:
+          radial-gradient(circle at top left, rgba(186, 230, 253, 0.45), transparent 34%),
+          linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(239, 246, 255, 0.96) 52%, rgba(219, 234, 254, 0.92));
+      }
+      .diagram-card {
+        background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(240,249,255,0.84));
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+      }
+      .ray-glow { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.25)); }
+      .blue-ray-glow { filter: drop-shadow(0 0 6px rgba(30, 64, 175, 0.22)); }
+      .angle-symbol {
+        position: relative;
+        display: inline-flex;
+        justify-content: center;
+        align-items: flex-end;
+        min-width: 0.72em;
+        padding: 0 0.08em;
+        line-height: 1;
+        font-weight: 800;
+      }
+      .angle-symbol::before {
+        content: "";
+        position: absolute;
+        top: -0.32em;
+        left: 50%;
+        width: 0.62em;
+        height: 0.34em;
+        border-top: 2px solid currentColor;
+        transform: translateX(-50%) rotate(-18deg) skewX(-18deg);
+        border-radius: 999px;
+      }
+      .angle-symbol.angle-prime::before {
+        width: 0.50em;
+        transform: translateX(calc(-50% - 0.13em)) rotate(-18deg) skewX(-18deg);
+      }
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in { animation: fade-in 0.28s ease-out both; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- CONSTANTS & PHYSICS ---
+        const N_AIR = 1.0;
+        const N_GLASS = 1.5;
+
+        // Hàm tính góc khúc xạ theo định luật Snell
+        const calcRefractionAngle = (incidentAngle) => {
+          const iRad = (incidentAngle * Math.PI) / 180;
+          const sinR = (N_AIR / N_GLASS) * Math.sin(iRad);
+          return (Math.asin(sinR) * 180) / Math.PI;
+        };
+
+        // Ký hiệu góc đúng dạng "chữ có mũ" bằng nét vẽ riêng, tránh bị trình duyệt hiển thị thành ký tự có dấu như î.
+        const SvgHat = ({ x, y, width = 9, color = "currentColor" }) => (
+          <path
+            d={`M ${x} ${y - 12} L ${x + width / 2} ${y - 17} L ${x + width} ${y - 12}`}
+            fill="none"
+            stroke={color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        );
+
+        const SvgAngleLabel = ({ x, y, symbol, value, color }) => {
+          const isPrime = symbol === "i′";
+          return (
+            <g className="animate-fade-in">
+              <text x={x} y={y} fill={color} fontSize="14" fontWeight="800">
+                <tspan>{symbol}</tspan><tspan dx="5">= {value}°</tspan>
+              </text>
+              <SvgHat x={x + 1} y={y} width={isPrime ? 8 : 9} color={color} />
+            </g>
+          );
+        };
+
+        const HtmlAngleSymbol = ({ symbol, className = "" }) => (
+          <span className={`angle-symbol ${symbol === "i′" ? "angle-prime" : ""} ${className}`}>{symbol}</span>
+        );
+
+        // --- COMPONENTS ---
+
+        function RefractionExperiment() {
+          const [activeMode, setActiveMode] = useState(1);
+          const [showLabels, setShowLabels] = useState(true);
+
+          return (
+            <div className="min-h-screen app-bg text-slate-800 font-sans flex flex-col">
+              {/* Header */}
+              <header className="bg-gradient-to-r from-blue-700 via-sky-700 to-indigo-700 text-white p-4 shadow-lg z-10">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold">Thí nghiệm ảo: Khúc xạ ánh sáng</h1>
+                    <p className="text-sm text-blue-200">Vật lý THCS - Môi trường Không khí & Thủy tinh</p>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-1 bg-blue-800 rounded-lg p-1 overflow-hidden">
+                    {[1, 2, 3].map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setActiveMode(mode)}
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                          activeMode === mode
+                            ? 'bg-white text-blue-800 rounded-md shadow'
+                            : 'text-blue-100 hover:text-white hover:bg-blue-600 rounded-md'
+                        }`}
+                      >
+                        Mode {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </header>
+
+              {/* Main Content */}
+              <main className="flex-1 max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+                {/* Render active mode */}
+                {activeMode === 1 && <Mode1 showLabels={showLabels} setShowLabels={setShowLabels} />}
+                {activeMode === 2 && <Mode2 showLabels={showLabels} setShowLabels={setShowLabels} />}
+                {activeMode === 3 && <Mode3 showLabels={showLabels} setShowLabels={setShowLabels} />}
+              </main>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // MODE 1: QUAN SÁT HIỆN TƯỢNG
+        // ==========================================
+        function Mode1({ showLabels, setShowLabels }) {
+          const [incidentAngle, setIncidentAngle] = useState(45); // 0 đến 90 độ
+          const [targetX, setTargetX] = useState(300);
+          const [draggingNode, setDraggingNode] = useState(null); // 'source', 'target'
+          const [showExplanation, setShowExplanation] = useState(false);
+
+          // Constants for SVG Canvas
+          const width = 600;
+          const height = 500;
+          const I_x = 300;
+          const I_y = 250;
+          const radius = 200;
+          const sourceRadius = 220; // Bán kính quỹ đạo quay của nguồn sáng
+
+          // Xử lý kéo thả (hỗ trợ cả chuột và cảm ứng nhờ Pointer Events)
+          const handlePointerDown = (node, e) => {
+            setDraggingNode(node);
+            e.target.setPointerCapture(e.pointerId);
+          };
+
+          const handlePointerMove = (e) => {
+            if (!draggingNode) return;
+            const svg = e.currentTarget;
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX; 
+            pt.y = e.clientY;
+            const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+            
+            // Check if it hits Point I to use as pivot if hitting, otherwise use targetX
+            const currentTargetX = Math.abs(targetX - I_x) < 15 ? I_x : targetX;
+
+            if (draggingNode === 'source') {
+              // Tính toán góc từ điểm tới đến vị trí chuột
+              const dx = currentTargetX - loc.x; // Trục x ngược chiều (sang trái là dương)
+              const dy = I_y - loc.y;            // Trục y ngược chiều (hướng lên là dương)
+              let deg = (Math.atan2(dx, dy) * 180) / Math.PI;
+              
+              // Giới hạn khoảng chạy từ pháp tuyến (0 độ) đến mặt phân cách (90 độ)
+              deg = Math.max(0, Math.min(90, deg));
+              setIncidentAngle(deg);
+            } else if (draggingNode === 'target') {
+              setTargetX(Math.max(50, Math.min(width - 50, loc.x)));
+            }
+          };
+
+          const handlePointerUp = () => setDraggingNode(null);
+
+          // Check if it hits Point I
+          const isHittingI = Math.abs(targetX - I_x) < 15;
+          const drawHitX = isHittingI ? I_x : targetX;
+
+          // Tính toán Vật lý
+          const incRad = (incidentAngle * Math.PI) / 180;
+          
+          // Vị trí nguồn sáng luôn nằm trên cung tròn bán kính sourceRadius
+          const sourcePos = {
+            x: drawHitX - sourceRadius * Math.sin(incRad),
+            y: I_y - sourceRadius * Math.cos(incRad)
+          };
+          
+          // Vector chỉ hướng từ Điểm tới ngược về phía Nguồn sáng
+          const uIx = -Math.sin(incRad);
+          const uIy = -Math.cos(incRad);
+
+          const incidentDeg = incidentAngle;
+
+          let rDeg = 0;
+          let refractedRad = 0;
+          // Vector tia khúc xạ (từ I)
+          let uRx = 0, uRy = 1;
+          // Vector tia phản xạ (từ I, đối xứng qua pháp tuyến)
+          let uReflX = -uIx, uReflY = uIy;
+
+          if (isHittingI) {
+            rDeg = calcRefractionAngle(incidentDeg);
+            refractedRad = (rDeg * Math.PI) / 180;
+            // Khúc xạ sang phải
+            uRx = Math.sin(refractedRad);
+            uRy = Math.cos(refractedRad); // hướng xuống
+          }
+
+          // Hàm helper để vẽ cung tròn nằm chính xác giữa 2 vector hướng từ tâm I
+          const drawArcBetweenVectors = (cx, cy, r, ux1, uy1, ux2, uy2) => {
+            const x1 = cx + r * ux1;
+            const y1 = cy + r * uy1;
+            const x2 = cx + r * ux2;
+            const y2 = cy + r * uy2;
+            // Tính tích có hướng để xác định chiều vẽ vòng cung
+            const cross = ux1 * uy2 - uy1 * ux2;
+            const sweepFlag = cross > 0 ? 1 : 0;
+            return `M ${x1} ${y1} A ${r} ${r} 0 0 ${sweepFlag} ${x2} ${y2}`;
+          };
+
+          const reset = () => {
+            setIncidentAngle(45);
+            setTargetX(300);
+          };
+
+          return (
+            <>
+              {/* Sidebar Controls (Được thu hẹp) */}
+              <div className="col-span-1 lg:col-span-3 flex flex-col gap-4">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-xl font-bold text-slate-800 mb-2">1. Quan sát</h2>
+                  <p className="text-sm text-slate-600 mb-4">
+                    <strong>Kéo thả</strong> trực tiếp nguồn sáng để thay đổi góc tới (khoảng chạy từ pháp tuyến đến mặt phân cách). Đưa tia tới đi qua đúng <strong>Điểm tới I</strong>.
+                  </p>
+
+                  <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                    <button 
+                      onClick={() => setShowLabels(!showLabels)}
+                      className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium transition"
+                    >
+                      {showLabels ? 'Ẩn chú thích' : 'Hiện chú thích'}
+                    </button>
+                    <button 
+                      onClick={reset}
+                      className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium transition"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Feedback Panel */}
+                <div className={`p-4 rounded-xl border ${isHittingI ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 rounded-full p-1 ${isHittingI ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}`}>
+                      {isHittingI ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className={`font-semibold text-sm ${isHittingI ? 'text-green-800' : 'text-amber-800'}`}>
+                        {isHittingI ? 'Tuyệt vời!' : 'Gợi ý:'}
+                      </h3>
+                      <p className={`text-sm mt-1 ${isHittingI ? 'text-green-700' : 'text-amber-700'}`}>
+                        {isHittingI 
+                          ? 'Tia tới đã đi qua điểm I. Xảy ra hiện tượng khúc xạ và phản xạ.' 
+                          : 'Hãy kéo điểm tới (chấm tròn rỗng) chạm đúng vào tâm I của bản bán trụ.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pedagogical Explanation */}
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                  <button 
+                    onClick={() => setShowExplanation(!showExplanation)}
+                    className="flex items-center justify-between w-full text-left font-semibold text-blue-800"
+                  >
+                    <span>Em cần rút ra điều gì?</span>
+                    <svg className={`w-5 h-5 transition-transform ${showExplanation ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {showExplanation && (
+                    <div className="mt-3 text-sm text-blue-900 space-y-2">
+                      <p>1. Tại mặt phân cách, một phần ánh sáng bị <strong>phản xạ</strong> lại không khí (tia xanh đậm), phần lớn bị <strong>khúc xạ</strong> vào thủy tinh (tia màu đỏ).</p>
+                      <p>2. Tia khúc xạ bị lệch <strong>lại gần pháp tuyến hơn</strong> so với tia tới.</p>
+                      <p>3. Tia sáng đi ra khỏi mặt cong truyền thẳng do đi vuông góc với bề mặt cong.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SVG Canvas Area (Mở rộng diện tích) */}
+              <div className="col-span-1 lg:col-span-9 diagram-card rounded-2xl border border-sky-100 overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[500px] relative select-none">
+                <svg 
+                  viewBox={`0 0 ${width} ${height}`} 
+                  className="w-full h-auto max-w-2xl touch-none"
+                  style={{ touchAction: 'none' }}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                >
+                  <defs>
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" strokeWidth="1"/>
+                    </pattern>
+                    {/* Arrowheads */}
+                    <marker id="arrow-incident" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                    </marker>
+                    <marker id="arrow-refracted" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c" />
+                    </marker>
+                    <marker id="arrow-reflected" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e40af" />
+                    </marker>
+                  </defs>
+                  
+                  <rect width={width} height={height} fill="url(#grid)" />
+
+                  {/* Mediums */}
+                  <rect x="0" y="0" width={width} height={I_y} fill="#f8fafc" opacity="0.8" />
+                  <rect x="0" y={I_y} width={width} height={height - I_y} fill="#f0f9ff" opacity="0.8" />
+                  
+                  {/* Interface Line */}
+                  <line x1="50" y1={I_y} x2={width-50} y2={I_y} stroke="#64748b" strokeWidth="2" />
+                  {showLabels && <text x="60" y={I_y - 10} fill="#64748b" fontSize="12" fontWeight="bold">Mặt phân cách</text>}
+                  {showLabels && <text x="60" y="30" fill="#94a3b8" fontSize="14" fontWeight="bold">Không khí (n ≈ 1)</text>}
+                  {showLabels && <text x="60" y={height - 30} fill="#7dd3fc" fontSize="14" fontWeight="bold">Thủy tinh (n ≈ 1.5)</text>}
+
+                  {/* Glass Block */}
+                  <path 
+                    d={`M ${I_x - radius} ${I_y} A ${radius} ${radius} 0 0 0 ${I_x + radius} ${I_y} Z`} 
+                    fill="#bae6fd" opacity="0.4" stroke="#0ea5e9" strokeWidth="2" 
+                  />
+                  
+                  {/* Protractor markings */}
+                  <circle cx={I_x} cy={I_y} r={radius} fill="none" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="4 4" />
+                  {[0, 30, 60, 90, 120, 150, 180].map(deg => {
+                    const rad = (deg * Math.PI) / 180;
+                    const x1 = I_x + (radius - 10) * Math.cos(rad);
+                    const y1 = I_y + (radius - 10) * Math.sin(rad);
+                    const x2 = I_x + radius * Math.cos(rad);
+                    const y2 = I_y + radius * Math.sin(rad);
+                    return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#94a3b8" strokeWidth="1" />;
+                  })}
+
+                  {/* Normal Line */}
+                  <line x1={I_x} y1="50" x2={I_x} y2={height - 50} stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="6 4" />
+                  {showLabels && <text x={I_x + 10} y="60" fill="#64748b" fontSize="12" fontWeight="bold">Pháp tuyến</text>}
+
+                  {/* Tia tới */}
+                  <line 
+                    x1={sourcePos.x} y1={sourcePos.y} 
+                    x2={drawHitX} y2={I_y} 
+                    stroke="#ef4444" strokeWidth="3" className="ray-glow" 
+                    markerEnd={isHittingI ? "url(#arrow-incident)" : ""}
+                  />
+                  
+                  {/* Các tia khúc xạ và phản xạ được tính toán kỹ lượng */}
+                  {isHittingI && (
+                    <>
+                      {/* Tia khúc xạ */}
+                      <line 
+                        x1={I_x} y1={I_y} 
+                        x2={I_x + radius * uRx} y2={I_y + radius * uRy} 
+                        stroke="#b91c1c" strokeWidth="3" className="ray-glow" 
+                        markerEnd="url(#arrow-refracted)"
+                      />
+                      {/* Tia phản xạ */}
+                      <line 
+                        x1={I_x} y1={I_y} 
+                        x2={I_x + radius * uReflX} y2={I_y + radius * uReflY} 
+                        stroke="#1e40af" strokeWidth="2.5" className="blue-ray-glow" 
+                        markerEnd="url(#arrow-reflected)"
+                      />
+                      {/* Escape ray in Air */}
+                      <line 
+                        x1={I_x + radius * uRx} y1={I_y + radius * uRy} 
+                        x2={I_x + 400 * uRx} y2={I_y + 400 * uRy} 
+                        stroke="#ef4444" strokeWidth="2" opacity="0.6" strokeDasharray="4 2"
+                      />
+
+                      {/* Angle i (Góc tới) */}
+                      <path d={drawArcBetweenVectors(I_x, I_y, 40, 0, -1, uIx, uIy)} fill="none" stroke="#ef4444" strokeWidth="2" />
+                      {showLabels && <SvgAngleLabel x={I_x - 65} y={I_y - 50} symbol="i" value={incidentDeg.toFixed(1)} color="#ef4444" />}
+
+                      {/* Angle i' (Góc phản xạ) */}
+                      <path d={drawArcBetweenVectors(I_x, I_y, 50, 0, -1, uReflX, uReflY)} fill="none" stroke="#1e40af" strokeWidth="2" strokeDasharray="3 3"/>
+                      {showLabels && <SvgAngleLabel x={I_x + 20} y={I_y - 65} symbol="i′" value={incidentDeg.toFixed(1)} color="#1e40af" />}
+
+                      {/* Angle r (Góc khúc xạ) */}
+                      <path d={drawArcBetweenVectors(I_x, I_y, 40, 0, 1, uRx, uRy)} fill="none" stroke="#b91c1c" strokeWidth="2" />
+                      {showLabels && <SvgAngleLabel x={I_x + 20} y={I_y + 60} symbol="r" value={rDeg.toFixed(1)} color="#b91c1c" />}
+                    </>
+                  )}
+
+                  {/* Vùng kéo thả đầu dưới (Điểm tới) */}
+                  <circle 
+                    cx={drawHitX} cy={I_y} r="18" 
+                    fill="transparent" 
+                    stroke={isHittingI ? "#22c55e" : "#94a3b8"} 
+                    strokeWidth={isHittingI ? 2 : 1.5}
+                    strokeDasharray={isHittingI ? "none" : "4 2"}
+                    className="cursor-move hover:stroke-blue-500"
+                    onPointerDown={(e) => handlePointerDown('target', e)}
+                  />
+                  <circle cx={drawHitX} cy={I_y} r="5" fill={isHittingI ? "#16a34a" : "#cbd5e1"} className="pointer-events-none"/>
+                  {showLabels && <text x={drawHitX + 18} y={I_y - 12} fill={isHittingI ? "#16a34a" : "#64748b"} fontSize="14" fontWeight="bold">I</text>}
+
+                  {/* Vùng kéo thả Nguồn sáng */}
+                  <g 
+                    transform={`translate(${sourcePos.x}, ${sourcePos.y})`} 
+                    className="cursor-move"
+                    onPointerDown={(e) => handlePointerDown('source', e)}
+                  >
+                    <circle cx="0" cy="0" r="24" fill="transparent" /> {/* Vùng hit lớn để dễ chạm */}
+                    <rect x="-15" y="-15" width="30" height="30" rx="4" fill="#334155" className="pointer-events-none" />
+                    <circle cx="0" cy="0" r="4" fill="#ef4444" className="pointer-events-none" />
+                  </g>
+                </svg>
+
+                {/* Realtime Data Overlay */}
+                {isHittingI && (
+                  <div className="absolute top-2 right-2 md:top-6 md:right-6 bg-white/90 p-2 md:p-3 rounded-lg shadow border border-slate-200 text-xs md:text-sm pointer-events-none">
+                    <div className="flex justify-between gap-4 mb-1">
+                      <span className="text-slate-600 flex items-center">Góc tới (<HtmlAngleSymbol symbol="i" className="text-red-600" />):</span>
+                      <span className="font-bold text-red-600">{incidentDeg.toFixed(1)}°</span>
+                    </div>
+                    <div className="flex justify-between gap-4 mb-1">
+                      <span className="text-slate-600 flex items-center">Góc phản xạ (<HtmlAngleSymbol symbol="i′" className="text-blue-800" />):</span>
+                      <span className="font-bold text-blue-800">{incidentDeg.toFixed(1)}°</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-slate-600 flex items-center">Góc khúc xạ (<HtmlAngleSymbol symbol="r" className="text-red-800" />):</span>
+                      <span className="font-bold text-red-800">{rDeg.toFixed(1)}°</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        }
+        // ==========================================
+        // MODE 2: TÌM MỐI LIÊN HỆ GÓC TỚI & KHÚC XẠ
+        // ==========================================
+        function Mode2({ showLabels, setShowLabels }) {
+          const angles = [0, 20, 40, 60, 80];
+          const [currentAngleIndex, setCurrentAngleIndex] = useState(0);
+          const [recordedData, setRecordedData] = useState([]);
+          const [showExplanation, setShowExplanation] = useState(false);
+
+          const currentI = angles[currentAngleIndex];
+          const currentR = calcRefractionAngle(currentI);
+
+          const handleRecord = () => {
+            // Check if already recorded
+            if (!recordedData.some(d => d.i === currentI)) {
+              const newData = {
+                i: currentI,
+                r: currentR,
+                sinI: Math.sin((currentI * Math.PI) / 180),
+                sinR: Math.sin((currentR * Math.PI) / 180),
+              };
+              // Sort data by angle i just to keep table neat
+              const updatedList = [...recordedData, newData].sort((a, b) => a.i - b.i);
+              setRecordedData(updatedList);
+            }
+            
+            if (currentAngleIndex < angles.length - 1) {
+              setCurrentAngleIndex(prev => prev + 1);
+            }
+          };
+
+          const reset = () => {
+            setRecordedData([]);
+            setCurrentAngleIndex(0);
+          };
+
+          const isComplete = recordedData.length === 5;
+          const isRecordedCurrent = recordedData.some(d => d.i === currentI);
+
+          // SVG Constants
+          const width = 400;
+          const height = 400;
+          const I_x = 200;
+          const I_y = 200;
+          const radius = 150;
+
+          // Render variables
+          const iRad = (currentI * Math.PI) / 180;
+          const rRad = (currentR * Math.PI) / 180;
+          
+          // Laser comes from left side for consistency
+          const laserX = I_x - 180 * Math.sin(iRad);
+          const laserY = I_y - 180 * Math.cos(iRad);
+          
+          const refX = I_x + radius * Math.sin(rRad);
+          const refY = I_y + radius * Math.cos(rRad);
+
+          return (
+            <>
+              <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-xl font-bold text-slate-800 mb-2">2. Định luật Khúc xạ</h2>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Đo góc khúc xạ tương ứng với các góc tới cho trước, ghi vào bảng để tìm quy luật.
+                  </p>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-slate-700 block mb-2">Chọn góc tới (<HtmlAngleSymbol symbol="i" className="text-blue-700" />):</label>
+                    <div className="flex flex-wrap gap-2">
+                      {angles.map((angle, idx) => {
+                        const isRecorded = recordedData.some(d => d.i === angle);
+                        return (
+                          <button
+                            key={angle}
+                            onClick={() => setCurrentAngleIndex(idx)}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+                              currentI === angle 
+                                ? 'bg-blue-600 text-white border-blue-600' 
+                                : isRecorded 
+                                  ? 'bg-green-50 text-green-700 border-green-200' 
+                                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            {angle}°
+                            {isRecorded && <span className="ml-1">✓</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleRecord}
+                    disabled={isRecordedCurrent}
+                    className={`w-full py-2.5 rounded-lg text-white font-semibold transition-colors ${
+                      isRecordedCurrent ? 'bg-slate-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                    }`}
+                  >
+                    {isRecordedCurrent ? 'Đã ghi kết quả này' : 'Ghi kết quả vào bảng'}
+                  </button>
+                  
+                  <div className="mt-4 flex flex-wrap sm:flex-nowrap gap-2">
+                     <button onClick={() => setShowLabels(!showLabels)} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium">Toggle Chú thích</button>
+                     <button onClick={reset} className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium">Làm lại</button>
+                  </div>
+                </div>
+
+                {/* Pedagogical Area */}
+                {isComplete ? (
+                  <div className="bg-green-50 border border-green-200 p-4 rounded-xl animate-fade-in">
+                    <h3 className="font-bold text-green-800 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Đã thu thập đủ dữ liệu!
+                    </h3>
+                    <p className="text-sm text-green-900 mt-2">
+                      Hãy nhìn vào cột <strong>sin(i)/sin(r)</strong>. Em thấy giá trị này thay đổi như thế nào khi góc tới thay đổi?
+                    </p>
+                    <div className="mt-3 p-3 bg-white rounded border border-green-200 text-sm font-medium text-slate-800">
+                      Kết luận: Tỉ số giữa sin góc tới và sin góc khúc xạ là một hằng số đối với hai môi trường trong suốt nhất định (Định luật Snell).
+                    </div>
+                  </div>
+                ) : (
+                   <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                     <p className="text-sm text-blue-800">
+                       Hãy hoàn thành đủ {angles.length} phép đo để rút ra nhận xét đáng tin cậy. (Còn {angles.length - recordedData.length} phép đo)
+                     </p>
+                   </div>
+                )}
+              </div>
+
+              <div className="col-span-1 lg:col-span-8 flex flex-col gap-4">
+                {/* SVG Mini Canvas & Realtime data */}
+                <div className="diagram-card rounded-2xl border border-sky-100 p-4 flex flex-col md:flex-row gap-6 items-center">
+                   <div className="w-full max-w-[200px] md:max-w-[300px] mx-auto aspect-square rounded-full border border-slate-100 bg-slate-50 relative overflow-hidden flex-shrink-0">
+                     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+                        <defs>
+                          <marker id="arrow-sm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                          </marker>
+                        </defs>
+                        <rect x="0" y={I_y} width={width} height={height/2} fill="#bae6fd" opacity="0.3" />
+                        <path d={`M ${I_x - radius} ${I_y} A ${radius} ${radius} 0 0 0 ${I_x + radius} ${I_y} Z`} fill="#bae6fd" opacity="0.6" stroke="#0ea5e9" strokeWidth="1" />
+                        <line x1="0" y1={I_y} x2={width} y2={I_y} stroke="#64748b" strokeWidth="1" />
+                        <line x1={I_x} y1="0" x2={I_x} y2={height} stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 4" />
+                        
+                        {/* Rays */}
+                        <line x1={laserX} y1={laserY} x2={I_x} y2={I_y} stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrow-sm)" />
+                        <line x1={I_x} y1={I_y} x2={refX} y2={refY} stroke="#b91c1c" strokeWidth="2" />
+                        
+                        {/* Values on diagram */}
+                        {showLabels && (
+                          <>
+                            <SvgAngleLabel x={I_x - 46} y={I_y - 20} symbol="i" value={currentI.toFixed(0)} color="#ef4444" />
+                            <SvgAngleLabel x={I_x + 10} y={I_y + 30} symbol="r" value={currentR.toFixed(1)} color="#b91c1c" />
+                          </>
+                        )}
+                     </svg>
+                   </div>
+                   
+                   <div className="flex-1 w-full bg-slate-50 p-4 rounded-lg border border-slate-200">
+                     <h3 className="font-semibold text-slate-700 mb-3">Thông số hiện tại</h3>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white p-3 rounded shadow-sm">
+                          <div className="text-xs text-slate-500 flex items-center gap-1">Góc tới (<HtmlAngleSymbol symbol="i" />)</div>
+                          <div className="text-xl font-bold text-slate-800">{currentI}.0°</div>
+                          <div className="text-xs text-slate-400 mt-1">sin(i) = {Math.sin(iRad).toFixed(3)}</div>
+                        </div>
+                        <div className="bg-white p-3 rounded shadow-sm">
+                          <div className="text-xs text-slate-500 flex items-center gap-1">Góc khúc xạ (<HtmlAngleSymbol symbol="r" />)</div>
+                          <div className="text-xl font-bold text-slate-800">{currentR.toFixed(1)}°</div>
+                          <div className="text-xs text-slate-400 mt-1">sin(r) = {Math.sin(rRad).toFixed(3)}</div>
+                        </div>
+                     </div>
+                   </div>
+                </div>
+
+                {/* Data Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-slate-700 uppercase bg-slate-100 border-b">
+                        <tr>
+                          <th className="px-6 py-3">Lần đo</th>
+                          <th className="px-6 py-3">Góc tới <HtmlAngleSymbol symbol="i" /> (°)</th>
+                          <th className="px-6 py-3">Góc khúc xạ <HtmlAngleSymbol symbol="r" /> (°)</th>
+                          <th className="px-6 py-3">sin(i)</th>
+                          <th className="px-6 py-3">sin(r)</th>
+                          <th className="px-6 py-3 text-blue-700 font-bold bg-blue-50">sin(i)/sin(r)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recordedData.map((data, index) => (
+                          <tr key={index} className="bg-white border-b hover:bg-slate-50">
+                            <td className="px-6 py-3 font-medium text-slate-900">{index + 1}</td>
+                            <td className="px-6 py-3 text-red-600 font-semibold">{data.i.toFixed(1)}</td>
+                            <td className="px-6 py-3 text-red-800 font-semibold">{data.r.toFixed(1)}</td>
+                            <td className="px-6 py-3">{data.sinI.toFixed(3)}</td>
+                            <td className="px-6 py-3">{data.sinR.toFixed(3)}</td>
+                            <td className="px-6 py-3 font-bold text-blue-700 bg-blue-50">
+                              {data.sinR === 0 ? '-' : (data.sinI / data.sinR).toFixed(3)}
+                            </td>
+                          </tr>
+                        ))}
+                        {recordedData.length === 0 && (
+                          <tr>
+                            <td colSpan="6" className="px-6 py-8 text-center text-slate-400">
+                              Chưa có dữ liệu. Hãy chọn góc và nhấn "Ghi kết quả".
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        }
+
+        // ==========================================
+        // MODE 3: TÍNH ĐỒNG PHẲNG (2.5D SIMULATION)
+        // ==========================================
+        function Mode3({ showLabels, setShowLabels }) {
+          const [step, setStep] = useState(0); // 0: Init, 1: Place A, 2: Place B, 3: Place C
+          const [hideGlass, setHideGlass] = useState(false);
+          const [showExplanation, setShowExplanation] = useState(false);
+
+          const w = 600;
+          const h = 500;
+
+          // Isometric Coordinates
+          const cx = 300;
+          const cy = 290;
+          const rx = 240;
+          const ry = 95;
+          const gRx = 160;
+          const gRy = 63;
+          const gH = 70; // Glass height
+          const pZ = 35; // Pin head offset (y - pZ)
+
+          const O_b = { x: 300, y: 290 };
+          const A_b = { x: 300, y: 175 }; // Normal
+          const B_b = { x: 130, y: 225 }; // Incident
+          const C_b = { x: 440, y: 355 }; // Refracted
+
+          const O_h = { x: O_b.x, y: O_b.y - pZ };
+          const A_h = { x: A_b.x, y: A_b.y - pZ };
+          const B_h = { x: B_b.x, y: B_b.y - pZ };
+          const C_h = { x: C_b.x, y: C_b.y - pZ };
+
+          // Thêm điểm Mắt (Eye) nằm trên cùng đường thẳng O -> C, kéo dài ra ngoài
+          const Eye_h = {
+            x: C_h.x + (C_h.x - O_h.x) * 0.55,
+            y: C_h.y + (C_h.y - O_h.y) * 0.55
+          };
+
+          const reset = () => {
+            setStep(0);
+            setHideGlass(false);
+          };
+
+          const advanceStep = (targetStep) => {
+            if (step === targetStep - 1) setStep(targetStep);
+          };
+
+          const Pin = ({ b, h, label, color, active, onClick }) => {
+            const isVisible = step >= Number(label.charCodeAt(0) - 64) || label === 'O';
+            
+            return (
+              <g onClick={onClick} className={active ? "cursor-pointer hover:opacity-80" : ""}>
+                {active && (
+                  <circle cx={h.x} cy={h.y} r="25" fill={color} opacity="0.2" className="animate-ping" />
+                )}
+                
+                {(isVisible || active) && (
+                  <g opacity={active ? 0.5 : 1}>
+                    {/* Stem */}
+                    <line x1={b.x} y1={b.y} x2={h.x} y2={h.y} stroke="#334155" strokeWidth="2.5" />
+                    {/* Base shadow */}
+                    <ellipse cx={b.x} cy={b.y} rx="4" ry="2" fill="#000" opacity="0.4" />
+                    {/* Head */}
+                    <circle cx={h.x} cy={h.y} r="5" fill={color} stroke="#fff" strokeWidth="1" />
+                    {showLabels && <text x={h.x + 8} y={h.y - 8} fill="#1e293b" fontSize="13" fontWeight="bold">{label}</text>}
+                  </g>
+                )}
+              </g>
+            );
+          };
+
+          return (
+            <>
+              <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-xl font-bold text-slate-800 mb-2">3. Khảo sát không gian</h2>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Thí nghiệm cắm ghim để kiểm tra xem tia khúc xạ có nằm trong mặt phẳng tới hay không.
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    <button 
+                      onClick={() => advanceStep(1)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        step >= 1 ? 'bg-green-50 border-green-200 text-green-700' : 
+                        step === 0 ? 'bg-blue-50 border-blue-400 text-blue-800 shadow-inner' : 'bg-slate-50 border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <div className="font-semibold text-sm">Bước 1:</div>
+                      <div className="text-xs mt-1">Cắm ghim A để xác định pháp tuyến. (Lưu ý: mũi ghim cao bằng 1/2 bề dày bản bán trụ).</div>
+                    </button>
+                    <button 
+                      onClick={() => advanceStep(2)}
+                      disabled={step < 1}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        step >= 2 ? 'bg-green-50 border-green-200 text-green-700' : 
+                        step === 1 ? 'bg-blue-50 border-blue-400 text-blue-800 shadow-inner' : 'bg-slate-50 border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <div className="font-semibold text-sm">Bước 2:</div>
+                      <div className="text-xs mt-1">Cắm ghim B để xác định tia tới. Mặt phẳng đi qua ba đầu đinh ghim O, A, B song song với tấm xốp được gọi là mặt phẳng tới.</div>
+                    </button>
+                    <button 
+                      onClick={() => advanceStep(3)}
+                      disabled={step < 2}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        step >= 3 ? 'bg-green-50 border-green-200 text-green-700' : 
+                        step === 2 ? 'bg-blue-50 border-blue-400 text-blue-800 shadow-inner' : 'bg-slate-50 border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <div className="font-semibold text-sm">Bước 3:</div>
+                      <div className="text-xs mt-1">Đặt mắt nhìn vào mặt cong của khối thủy tinh, cắm ghim C sao cho nó che khuất ảnh của B và O.</div>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={hideGlass} 
+                        onChange={(e) => setHideGlass(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      Bỏ bản bán trụ (dùng tấm nhựa phẳng kiểm tra)
+                    </label>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap sm:flex-nowrap gap-2">
+                    <button onClick={reset} className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm font-medium">Làm lại</button>
+                  </div>
+                </div>
+
+                {step === 3 && (
+                   <div className="bg-green-50 border border-green-200 p-4 rounded-xl animate-fade-in">
+                     <button 
+                       onClick={() => setShowExplanation(!showExplanation)}
+                       className="flex items-center justify-between w-full text-left font-bold text-green-800"
+                     >
+                       <span>Kết quả quan sát</span>
+                       <svg className={`w-5 h-5 transition-transform ${showExplanation ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                     </button>
+                     {showExplanation && (
+                       <div className="mt-3 text-sm text-green-900">
+                         Khi bỏ bản bán trụ ra, ta thấy các tia BO, OA, OC (đi qua các đầu đinh ghim) cùng nằm gọn trên một tấm phẳng màu xanh nhạt (mặt phẳng tới).<br/><br/>
+                         <strong>Kết luận:</strong> Tia khúc xạ nằm trong mặt phẳng tới.
+                       </div>
+                     )}
+                   </div>
+                )}
+              </div>
+
+              <div className="col-span-1 lg:col-span-8 diagram-card rounded-2xl border border-sky-100 overflow-hidden relative flex items-center justify-center min-h-[300px] md:min-h-[500px]">
+                <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto max-w-2xl drop-shadow-md select-none">
+                  <defs>
+                    <marker id="arrow-to-eye" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                    </marker>
+                    <marker id="arrow-incident-m3" viewBox="0 0 10 10" refX="18" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                    </marker>
+                  </defs>
+
+                  {/* 1. Bases */}
+                  <ellipse cx={cx} cy={cy + 8} rx={rx + 4} ry={ry + 4} fill="#0f172a" />
+                  <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#f1f5f9" />
+                  <ellipse cx={cx} cy={cy} rx={rx - 15} ry={ry - 6} fill="none" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="4 6" />
+                  <line x1={cx - rx + 10} y1={cy} x2={cx + rx - 10} y2={cy} stroke="#cbd5e1" strokeWidth="1" />
+                  <line x1={cx} y1={cy - ry + 5} x2={cx} y2={cy + ry - 5} stroke="#cbd5e1" strokeWidth="1" />
+
+                  {/* 2. Plane of Incidence (Tấm bìa) */}
+                  {step >= 3 && (
+                    <g>
+                      <ellipse cx={cx} cy={cy - pZ} rx={rx} ry={ry} fill="#3b82f6" opacity={hideGlass ? "0.3" : "0.1"} stroke="#2563eb" strokeWidth="1" strokeDasharray="5 5" />
+                      {showLabels && <text x={cx + 100} y={cy - pZ + 80} fill="#1d4ed8" fontSize="12" fontWeight="bold" opacity="0.8">Mặt phẳng tới</text>}
+                    </g>
+                  )}
+
+                  {/* 3. Rays A and B */}
+                  {step >= 1 && <line x1={A_h.x} y1={A_h.y} x2={O_h.x} y2={O_h.y} stroke="#64748b" strokeWidth="2" strokeDasharray="4 4" />}
+                  {step >= 2 && <line x1={B_h.x} y1={B_h.y} x2={O_h.x} y2={O_h.y} stroke="#ef4444" strokeWidth="2.5" strokeDasharray="4 4" markerEnd="url(#arrow-incident-m3)" />}
+
+                  {/* 4. Pins A and B */}
+                  <Pin b={A_b} h={A_h} label="A" color="#eab308" active={step === 0} onClick={() => advanceStep(1)} />
+                  <Pin b={B_b} h={B_h} label="B" color="#ef4444" active={step === 1} onClick={() => advanceStep(2)} />
+
+                  {/* 5. Glass Block */}
+                  {!hideGlass && (
+                    <g>
+                      {/* Back Flat Face */}
+                      <polygon points={`${cx - gRx},${cy} ${cx + gRx},${cy} ${cx + gRx},${cy - gH} ${cx - gRx},${cy - gH}`} fill="#bae6fd" opacity="0.6" stroke="#38bdf8" strokeWidth="0.5" />
+                      
+                      {/* Top Face */}
+                      <path d={`M ${cx - gRx} ${cy - gH} L ${cx + gRx} ${cy - gH} A ${gRx} ${gRy} 0 0 1 ${cx - gRx} ${cy - gH} Z`} fill="#e0f2fe" opacity="0.8" stroke="#38bdf8" strokeWidth="1" />
+                      
+                      {/* Curved Front Face */}
+                      <path d={`M ${cx + gRx} ${cy} A ${gRx} ${gRy} 0 0 1 ${cx - gRx} ${cy} L ${cx - gRx} ${cy - gH} A ${gRx} ${gRy} 0 0 0 ${cx + gRx} ${cy - gH} Z`} fill="#7dd3fc" opacity="0.4" stroke="#0ea5e9" strokeWidth="1" />
+                    </g>
+                  )}
+
+                  {/* 6. Pin O */}
+                  <Pin b={O_b} h={O_h} label="O" color="#94a3b8" active={false} />
+
+                  {/* 7. Refracted Ray extended to Eye */}
+                  {step >= 3 && <line x1={O_h.x} y1={O_h.y} x2={Eye_h.x} y2={Eye_h.y} stroke="#ef4444" strokeWidth="2.5" strokeDasharray="4 4" markerEnd="url(#arrow-to-eye)" />}
+
+                  {/* 8. Pin C */}
+                  <Pin b={C_b} h={C_h} label="C" color="#8b5cf6" active={step === 2} onClick={() => advanceStep(3)} />
+
+                  {/* 9. Eye Icon */}
+                  {step >= 3 && (
+                    <g transform={`translate(${Eye_h.x + 2}, ${Eye_h.y - 8}) scale(0.7) rotate(25)`}>
+                      <path d="M 40 0 C 30 -15 10 -15 0 0 C 10 15 30 15 40 0 Z" fill="#fcd34d" stroke="#b45309" strokeWidth="2"/>
+                      <circle cx="15" cy="0" r="6" fill="#1e3a8a"/>
+                      <circle cx="13" cy="-1" r="2" fill="#fff"/>
+                      <path d="M 5 -10 Q 20 -20 35 -10" fill="none" stroke="#000" strokeWidth="2"/>
+                    </g>
+                  )}
+                </svg>
+
+                {/* Floating helper */}
+                {step < 3 && (
+                  <div className="absolute top-2 md:top-4 left-1/2 -translate-x-1/2 bg-blue-800 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg text-xs md:text-sm font-medium animate-pulse pointer-events-none max-w-[90%] text-center">
+                    {step === 0 ? "Click vào vùng nhấp nháy để cắm ghim A" :
+                     step === 1 ? "Click vào vùng nhấp nháy để cắm ghim B" :
+                     "Click vào vùng nhấp nháy để cắm ghim C"}
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        }
+
+        // Khởi tạo React App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RefractionExperiment />);
+    </script>
+</body>
+</html>

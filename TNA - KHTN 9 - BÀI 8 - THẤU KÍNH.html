@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thí nghiệm ảo: Lật Tẩy Thấu Kính</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel (Dịch JSX sang JS) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* CSS cho thanh cuộn tùy chỉnh */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* CSS cho nền lưới caro */
+        .bg-grid-pattern {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 25px 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // --- CONSTANTS & CONFIG ---
+        const FOCAL_LENGTH = 120; // Độ lớn tiêu cự mặc định
+        const SVG_WIDTH = 800;
+        const SVG_HEIGHT = 450;
+        const OBJECT_HEIGHT = 60;
+        const LENS_HEIGHT = 300;
+
+        // Helper để map tọa độ toán học sang SVG
+        const cx = (x) => SVG_WIDTH / 2 + x;
+        const cy = (y) => SVG_HEIGHT / 2 - y;
+
+        // --- ICONS ---
+        const IconLightbulb = () => <span className="text-xl">💡</span>;
+        const IconMonitor = () => <span className="text-xl">🎛️</span>;
+        const IconInfo = () => <span className="text-xl">📝</span>;
+        const IconReset = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
+
+        // --- SHARED COMPONENTS ---
+        const LensGraphic = ({ type }) => {
+          return (
+            <g>
+              {/* Trục chính thấu kính */}
+              <line x1={cx(0)} y1={cy(LENS_HEIGHT/2)} x2={cx(0)} y2={cy(-LENS_HEIGHT/2)} stroke="#3b82f6" strokeWidth="5" rx="2" />
+              {/* Mũi tên */}
+              {type === 'convex' ? (
+                <>
+                  <path d={`M ${cx(-10)} ${cy(LENS_HEIGHT/2 - 12)} L ${cx(0)} ${cy(LENS_HEIGHT/2 + 2)} L ${cx(10)} ${cy(LENS_HEIGHT/2 - 12)}`} fill="none" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+                  <path d={`M ${cx(-10)} ${cy(-LENS_HEIGHT/2 + 12)} L ${cx(0)} ${cy(-LENS_HEIGHT/2 - 2)} L ${cx(10)} ${cy(-LENS_HEIGHT/2 + 12)}`} fill="none" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+                </>
+              ) : (
+                <>
+                  <path d={`M ${cx(-10)} ${cy(LENS_HEIGHT/2 + 12)} L ${cx(0)} ${cy(LENS_HEIGHT/2 - 2)} L ${cx(10)} ${cy(LENS_HEIGHT/2 + 12)}`} fill="none" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+                  <path d={`M ${cx(-10)} ${cy(-LENS_HEIGHT/2 - 12)} L ${cx(0)} ${cy(-LENS_HEIGHT/2 + 2)} L ${cx(10)} ${cy(-LENS_HEIGHT/2 - 12)}`} fill="none" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+                </>
+              )}
+            </g>
+          );
+        };
+
+        const FocalPoints = ({ f, showLabels }) => {
+          const isConvex = f > 0;
+          const absF = Math.abs(f);
+          
+          const F_pos = isConvex ? -absF : absF;
+          const F_prime_pos = isConvex ? absF : -absF;
+
+          return (
+            <g>
+              {/* Optical Center O */}
+              <circle cx={cx(0)} cy={cy(0)} r="5" fill="#1e293b" />
+              {showLabels && <text x={cx(8)} y={cy(-18)} fill="#1e293b" fontSize="16" fontWeight="bold">O</text>}
+
+              {/* F */}
+              <circle cx={cx(F_pos)} cy={cy(0)} r="5" fill="#ef4444" />
+              {showLabels && <text x={cx(F_pos - 8)} y={cy(-18)} fill="#ef4444" fontSize="16" fontWeight="bold">F</text>}
+              <circle cx={cx(F_pos * 2)} cy={cy(0)} r="4" fill="#f87171" />
+              {showLabels && <text x={cx(F_pos * 2 - 12)} y={cy(-18)} fill="#f87171" fontSize="14" fontWeight="600">2F</text>}
+
+              {/* F' */}
+              <circle cx={cx(F_prime_pos)} cy={cy(0)} r="5" fill="#10b981" />
+              {showLabels && <text x={cx(F_prime_pos - 8)} y={cy(-18)} fill="#10b981" fontSize="16" fontWeight="bold">F'</text>}
+              <circle cx={cx(F_prime_pos * 2)} cy={cy(0)} r="4" fill="#34d399" />
+              {showLabels && <text x={cx(F_prime_pos * 2 - 15)} y={cy(-18)} fill="#34d399" fontSize="14" fontWeight="600">2F'</text>}
+            </g>
+          );
+        };
+
+        const FShape = ({ x, y, height, isVirtual, m = 1 }) => {
+          const scaledH = height * m;
+          const w = 22 * Math.abs(m);
+          const color = isVirtual ? "#9ca3af" : "#ef4444";
+          
+          return (
+            <g transform={`translate(${cx(x)}, ${cy(0)})`}>
+              {/* Thân */}
+              <line x1="0" y1="0" x2="0" y2={-scaledH} stroke={color} strokeWidth="5" strokeLinecap="round" strokeDasharray={isVirtual ? "6,6" : ""} />
+              {/* Nhánh trên */}
+              <line x1="0" y1={-scaledH} x2={w} y2={-scaledH} stroke={color} strokeWidth="5" strokeLinecap="round" strokeDasharray={isVirtual ? "6,6" : ""} />
+              {/* Nhánh giữa */}
+              <line x1="0" y1={-scaledH * 0.5} x2={w * 0.7} y2={-scaledH * 0.5} stroke={color} strokeWidth="5" strokeLinecap="round" strokeDasharray={isVirtual ? "6,6" : ""} />
+              {/* Mũi tên chỉ chiều */}
+              <polygon points={`-5,${-scaledH + (m>0?10:-10)} 5,${-scaledH + (m>0?10:-10)} 0,${-scaledH}`} fill={color} />
+            </g>
+          );
+        };
+
+        // --- MAIN APP ---
+        function PhysicsLab() {
+          const [activeTab, setActiveTab] = useState('part1');
+
+          return (
+            <div className="min-h-screen bg-indigo-50/50 text-gray-800 font-sans selection:bg-indigo-200">
+              {/* Header Mobile-friendly */}
+              <header className="bg-white shadow-sm border-b border-indigo-100 sticky top-0 z-20">
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-2 rounded-xl shadow-md">
+                      <IconLightbulb />
+                    </div>
+                    <h1 className="text-lg sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700">
+                      Lật Tẩy Thấu Kính 🕵️‍♂️✨
+                    </h1>
+                  </div>
+                  
+                  <div className="flex bg-gray-100 p-1.5 rounded-xl w-full sm:w-auto shadow-inner">
+                    <button 
+                      onClick={() => setActiveTab('part1')}
+                      className={`flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'part1' ? 'bg-white text-indigo-600 shadow-sm scale-100' : 'text-gray-500 hover:text-gray-800 scale-95'}`}
+                    >
+                      1. Bắn Laser ⚡
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('part2')}
+                      className={`flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'part2' ? 'bg-white text-indigo-600 shadow-sm scale-100' : 'text-gray-500 hover:text-gray-800 scale-95'}`}
+                    >
+                      2. Truy Tìm Ảnh 📸
+                    </button>
+                  </div>
+                </div>
+              </header>
+
+              {/* Main Content */}
+              <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6">
+                {activeTab === 'part1' ? <Part1 /> : <Part2 />}
+              </main>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // PHẦN 1: ĐƯỜNG TRUYỀN TIA SÁNG
+        // ==========================================
+        function Part1() {
+          const svgRef = useRef(null);
+          const [lensType, setLensType] = useState('convex');
+          const [sourceY, setSourceY] = useState(80);
+          const [showRay1, setShowRay1] = useState(true);
+          const [showRay2, setShowRay2] = useState(true);
+          const [showRay3, setShowRay3] = useState(true);
+          const [showExtensions, setShowExtensions] = useState(true);
+          const [showLabels, setShowLabels] = useState(true);
+          const [note, setNote] = useState("");
+          const [isDragging, setIsDragging] = useState(false);
+
+          const reset = () => {
+            setLensType('convex'); setSourceY(80);
+            setShowRay1(true); setShowRay2(true); setShowRay3(true);
+            setShowExtensions(true); setShowLabels(true); setNote("");
+          };
+
+          const f = lensType === 'convex' ? FOCAL_LENGTH : -FOCAL_LENGTH;
+          const sourceX = -250;
+          
+          // Logic kéo thả Drag&Drop Điểm S
+          useEffect(() => {
+            const handleGlobalMove = (e) => {
+              if (!isDragging) return;
+              if (e.cancelable) e.preventDefault(); // Chống cuộn trang khi đang kéo
+              
+              const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+              if (svgRef.current) {
+                const rect = svgRef.current.getBoundingClientRect();
+                const scaleY = SVG_HEIGHT / rect.height;
+                const svgY = (clientY - rect.top) * scaleY;
+                
+                let newMathY = Math.round(SVG_HEIGHT / 2 - svgY);
+                // Giới hạn trong khung hình
+                setSourceY(Math.max(-150, Math.min(150, newMathY)));
+              }
+            };
+            
+            const handleGlobalEnd = () => setIsDragging(false);
+
+            if (isDragging) {
+              window.addEventListener('mousemove', handleGlobalMove);
+              window.addEventListener('mouseup', handleGlobalEnd);
+              window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+              window.addEventListener('touchend', handleGlobalEnd);
+            }
+
+            return () => {
+              window.removeEventListener('mousemove', handleGlobalMove);
+              window.removeEventListener('mouseup', handleGlobalEnd);
+              window.removeEventListener('touchmove', handleGlobalMove);
+              window.removeEventListener('touchend', handleGlobalEnd);
+            };
+          }, [isDragging]);
+
+          const feedbackMsg = useMemo(() => {
+            if (showRay1 && !showRay2 && !showRay3) {
+              return lensType === 'convex' 
+                ? "Tia số 1: Vừa đâm song song vào kính là bị bẻ cong đi tọt qua F' luôn! 😲" 
+                : "Tia số 1: Đâm vào kính phân kì thì loe ra ngoài vũ trụ, nhưng đuôi của nó (đường kéo dài) trỏ thẳng về F. 🚀";
+            }
+            if (!showRay1 && showRay2 && !showRay3) {
+              return "Tia số 2: Kẻ 'Bất chấp'. Gặp quang tâm O là cứ cắm đầu đi thẳng, không ai cản được bước chân em! 🚶‍♂️💨";
+            }
+            if (!showRay1 && !showRay2 && showRay3) {
+              return lensType === 'convex'
+                ? "Tia số 3: Đi qua tiêu điểm F để rồi... ló ra song song. Quá ngầu! 😎"
+                : "Tia số 3: Lao như thiêu thân về phía F' (bên kia kính), vừa chạm kính đã rén, quay xe đi song song! 🚗💨";
+            }
+            if (showRay1 && showRay2 && showRay3) {
+              return "WOAA! Bật full combo 3 tia! Bạn có thấy chúng nó tụ tập tại 1 điểm (ảo hoặc thật) không? Đó chính là ẢNH đó! 🎇🎯";
+            }
+            if (!showRay1 && !showRay2 && !showRay3) {
+              return "Tối thui vậy bạn êi? Bật công tắc tia sáng lên nào! 💡";
+            }
+            return "Nhìn kĩ đường đi của từng tia nhé. Bí kíp lấy điểm 10 nằm ở đây! 🤫";
+          }, [showRay1, showRay2, showRay3, lensType]);
+
+          const renderRays = () => {
+            const rays = [];
+            const farX = 400; const farXLeft = -400;
+
+            if (showRay1) {
+              rays.push(<line key="r1_in" x1={cx(sourceX)} y1={cy(sourceY)} x2={cx(0)} y2={cy(sourceY)} stroke="#eab308" strokeWidth="3" markerEnd="url(#arrow)" />);
+              if (lensType === 'convex') {
+                const slope = (0 - sourceY) / (f - 0);
+                rays.push(<line key="r1_out" x1={cx(0)} y1={cy(sourceY)} x2={cx(farX)} y2={cy(sourceY + slope * farX)} stroke="#eab308" strokeWidth="3" markerEnd="url(#arrow)" />);
+              } else {
+                const slope = (0 - sourceY) / (f - 0); 
+                rays.push(<line key="r1_out" x1={cx(0)} y1={cy(sourceY)} x2={cx(farX)} y2={cy(sourceY + slope * farX)} stroke="#eab308" strokeWidth="3" markerEnd="url(#arrow)" />);
+                if (showExtensions) rays.push(<line key="r1_ext" x1={cx(0)} y1={cy(sourceY)} x2={cx(f)} y2={cy(0)} stroke="#fde047" strokeWidth="3" strokeDasharray="6,6" />);
+              }
+              if (showLabels) rays.push(<text key="l1" x={cx(-120)} y={cy(sourceY + 18)} fill="#ca8a04" fontSize="13" fontWeight="bold" className="select-none pointer-events-none">Tia 1</text>);
+            }
+
+            if (showRay2) {
+              const slope = (0 - sourceY) / (0 - sourceX);
+              rays.push(<line key="r2_in" x1={cx(sourceX)} y1={cy(sourceY)} x2={cx(0)} y2={cy(0)} stroke="#f97316" strokeWidth="3" markerEnd="url(#arrow_orange)" />);
+              rays.push(<line key="r2_out" x1={cx(0)} y1={cy(0)} x2={cx(farX)} y2={cy(slope * farX)} stroke="#f97316" strokeWidth="3" markerEnd="url(#arrow_orange)" />);
+              if (lensType === 'concave' && showExtensions) {
+                  rays.push(<line key="r2_ext" x1={cx(0)} y1={cy(0)} x2={cx(farXLeft)} y2={cy(slope * farXLeft)} stroke="#fdba74" strokeWidth="3" strokeDasharray="6,6" />);
+              }
+              if (showLabels) rays.push(<text key="l2" x={cx(-120)} y={cy(slope * -120 + 18)} fill="#c2410c" fontSize="13" fontWeight="bold" className="select-none pointer-events-none">Tia 2</text>);
+            }
+
+            if (showRay3) {
+              if (lensType === 'convex') {
+                const slope = (0 - sourceY) / (-f - sourceX);
+                const yLens = slope * f;
+                rays.push(<line key="r3_in" x1={cx(sourceX)} y1={cy(sourceY)} x2={cx(0)} y2={cy(yLens)} stroke="#ec4899" strokeWidth="3" markerEnd="url(#arrow_pink)" />);
+                rays.push(<line key="r3_out" x1={cx(0)} y1={cy(yLens)} x2={cx(farX)} y2={cy(yLens)} stroke="#ec4899" strokeWidth="3" markerEnd="url(#arrow_pink)" />);
+              } else {
+                const slope = (0 - sourceY) / (-f - sourceX);
+                const yLens = sourceY + slope * (-sourceX);
+                rays.push(<line key="r3_in" x1={cx(sourceX)} y1={cy(sourceY)} x2={cx(0)} y2={cy(yLens)} stroke="#ec4899" strokeWidth="3" markerEnd="url(#arrow_pink)" />);
+                if (showExtensions) rays.push(<line key="r3_in_ext" x1={cx(0)} y1={cy(yLens)} x2={cx(-f)} y2={cy(0)} stroke="#fbcfe8" strokeWidth="3" strokeDasharray="6,6" />);
+                rays.push(<line key="r3_out" x1={cx(0)} y1={cy(yLens)} x2={cx(farX)} y2={cy(yLens)} stroke="#ec4899" strokeWidth="3" markerEnd="url(#arrow_pink)" />);
+                if (showExtensions) rays.push(<line key="r3_out_ext" x1={cx(0)} y1={cy(yLens)} x2={cx(farXLeft)} y2={cy(yLens)} stroke="#fbcfe8" strokeWidth="3" strokeDasharray="6,6" />);
+              }
+              if (showLabels) rays.push(<text key="l3" x={cx(-120)} y={cy(sourceY - 18)} fill="#be185d" fontSize="13" fontWeight="bold" className="select-none pointer-events-none">Tia 3</text>);
+            }
+
+            return rays;
+          };
+
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                
+                {/* Khung mô phỏng SVG */}
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border-2 border-indigo-100 overflow-hidden relative select-none">
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-2 p-1.5 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 z-10">
+                    <button onClick={() => setLensType('convex')} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-transform active:scale-95 ${lensType === 'convex' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>🔍 Hội tụ</button>
+                    <button onClick={() => setLensType('concave')} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-transform active:scale-95 ${lensType === 'concave' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>👓 Phân kì</button>
+                  </div>
+                  
+                  {/* Label hướng dẫn kéo */}
+                  <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-600 border border-amber-200 shadow-sm animate-bounce">
+                    👆 Chạm & Kéo điểm S để điều khiển!
+                  </div>
+
+                  <div className="w-full aspect-video bg-grid-pattern touch-none">
+                    <svg ref={svgRef} viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className="w-full h-full">
+                      <defs>
+                        <pattern id="grid" width="25" height="25" patternUnits="userSpaceOnUse">
+                          <path d="M 25 0 L 0 0 0 25" fill="none" stroke="#f1f5f9" strokeWidth="1"/>
+                        </pattern>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#eab308" /></marker>
+                        <marker id="arrow_orange" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316" /></marker>
+                        <marker id="arrow_pink" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ec4899" /></marker>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid)" />
+                      
+                      <line x1="0" y1={SVG_HEIGHT/2} x2={SVG_WIDTH} y2={SVG_HEIGHT/2} stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                      <LensGraphic type={lensType} />
+                      <FocalPoints f={f} showLabels={showLabels} />
+                      
+                      {renderRays()}
+
+                      {/* BÓNG ĐÈN S - DRAGGABLE */}
+                      <g 
+                        transform={`translate(${cx(sourceX)}, ${cy(sourceY)})`}
+                        onMouseDown={() => setIsDragging(true)}
+                        onTouchStart={(e) => { e.stopPropagation(); setIsDragging(true); }}
+                        className="cursor-ns-resize"
+                        style={{ touchAction: 'none' }}
+                      >
+                        {/* Vùng hitbox lớn vô hình để dễ chạm ngón tay */}
+                        <circle cx="0" cy="0" r="30" fill="transparent" />
+                        <circle cx="0" cy="0" r="8" fill="#fbbf24" className={`${isDragging ? 'scale-125' : 'animate-pulse'} transition-transform duration-200`} />
+                        <circle cx="0" cy="0" r="4" fill="#fff" />
+                      </g>
+                      {showLabels && <text x={cx(sourceX - 25)} y={cy(sourceY + 25)} fill="#d97706" fontWeight="900" fontSize="18" className="select-none pointer-events-none">S 🌟</text>}
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Bảng điều khiển */}
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-indigo-100 p-4 sm:p-5 flex flex-col gap-5">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 flex items-center gap-2"><IconMonitor/> Trạm Điều Khiển</h2>
+                    <button onClick={reset} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors active:scale-95" title="Chơi lại từ đầu"><IconReset/></button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-3 rounded-xl">
+                      <label className="flex justify-between text-sm font-bold text-gray-700 mb-3">
+                        <span>Trượt (hoặc chạm kéo trực tiếp S)</span>
+                        <span className="text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-md">{sourceY}px</span>
+                      </label>
+                      <input type="range" min="-150" max="150" value={sourceY} onChange={(e) => setSourceY(Number(e.target.value))} 
+                        className="w-full h-3 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="block text-sm font-extrabold text-gray-800">Bật công tắc tia laser 🚦:</label>
+                      <div className="flex flex-col gap-3">
+                        <label className="flex items-center gap-3 p-2 rounded-lg bg-yellow-50/50 border border-yellow-100 hover:bg-yellow-50 cursor-pointer transition-colors">
+                          <input type="checkbox" checked={showRay1} onChange={e => setShowRay1(e.target.checked)} className="w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400" />
+                          <span className="text-yellow-700 font-bold text-sm">Tia 1: "Nhút nhát" (Song song)</span>
+                        </label>
+                        <label className="flex items-center gap-3 p-2 rounded-lg bg-orange-50/50 border border-orange-100 hover:bg-orange-50 cursor-pointer transition-colors">
+                          <input type="checkbox" checked={showRay2} onChange={e => setShowRay2(e.target.checked)} className="w-5 h-5 rounded text-orange-500 focus:ring-orange-400" />
+                          <span className="text-orange-700 font-bold text-sm">Tia 2: "Bất chấp" (Qua điểm O)</span>
+                        </label>
+                        <label className="flex items-center gap-3 p-2 rounded-lg bg-pink-50/50 border border-pink-100 hover:bg-pink-50 cursor-pointer transition-colors">
+                          <input type="checkbox" checked={showRay3} onChange={e => setShowRay3(e.target.checked)} className="w-5 h-5 rounded text-pink-500 focus:ring-pink-400" />
+                          <span className="text-pink-700 font-bold text-sm">Tia 3: "Ngược đời" (Qua điểm F)</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-sm font-medium">
+                      <label className="flex items-center gap-2 cursor-pointer text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+                        <input type="checkbox" checked={showExtensions} onChange={e => setShowExtensions(e.target.checked)} className="w-4 h-4 rounded text-gray-500" />
+                        Đường nét đứt ✂️
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+                        <input type="checkbox" checked={showLabels} onChange={e => setShowLabels(e.target.checked)} className="w-4 h-4 rounded text-gray-500" />
+                        Hiện tên (O, F) 🔠
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200 shadow-inner">
+                    <h3 className="text-xs font-black text-indigo-800 uppercase tracking-wider mb-2 flex items-center gap-1">🎤 Loa Phát Thanh Nhận Xét:</h3>
+                    <p className="text-sm text-indigo-900 leading-relaxed font-medium">{feedbackMsg}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ghi nhận & Giải thích */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="bg-white rounded-2xl shadow-md border-2 border-yellow-100 p-4 sm:p-5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-yellow-100 rounded-bl-full -z-10"></div>
+                  <h3 className="font-extrabold text-yellow-800 mb-3 flex items-center gap-2"><IconInfo/> Nhật Ký Thí Nghiệm ✍️</h3>
+                  <textarea 
+                    className="w-full h-28 p-3 bg-yellow-50/30 border-2 border-yellow-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-0 focus:border-yellow-400 outline-none resize-none placeholder-yellow-400/70" 
+                    placeholder="Ghi vội vài dòng nhận xét vào đây kẻo quên mất bài nhen..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  ></textarea>
+                </div>
+                
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl shadow-md border-2 border-emerald-200 p-4 sm:p-5">
+                  <h3 className="font-extrabold text-emerald-800 mb-3 text-lg">💡 Trí khôn của ta đây! (Tóm tắt)</h3>
+                  <ul className="space-y-3">
+                    <li className="flex gap-2 items-start text-sm text-emerald-900 font-medium">
+                      <span className="text-emerald-500 mt-0.5">✔️</span>
+                      <span><strong>Thấu kính hội tụ</strong> khoái gom các tia sáng lại một cục (F').</span>
+                    </li>
+                    <li className="flex gap-2 items-start text-sm text-emerald-900 font-medium">
+                      <span className="text-emerald-500 mt-0.5">✔️</span>
+                      <span><strong>Thấu kính phân kì</strong> thì thích hất tung tia sáng văng ra xa nhau.</span>
+                    </li>
+                    <li className="flex gap-2 items-start text-sm text-emerald-900 font-medium">
+                      <span className="text-emerald-500 mt-0.5">✔️</span>
+                      <span>Quang tâm O là vùng <strong>"bất khả xâm phạm"</strong>, tia sáng chui qua đây đều đi thẳng tuột!</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // PHẦN 2: ĐẶC ĐIỂM ẢNH CỦA VẬT
+        // ==========================================
+        function Part2() {
+          const svgRef = useRef(null);
+          const [lensType, setLensType] = useState('convex');
+          const [objX, setObjX] = useState(-300);
+          const [screenX, setScreenX] = useState(200);
+          const [showScreen, setShowScreen] = useState(true);
+          
+          // States cho Drag&Drop
+          const [isDraggingObj, setIsDraggingObj] = useState(false);
+          const [isDraggingScreen, setIsDraggingScreen] = useState(false);
+
+          const reset = () => {
+            setLensType('convex'); setObjX(-300); setScreenX(200); setShowScreen(true);
+          };
+
+          const f = lensType === 'convex' ? FOCAL_LENGTH : -FOCAL_LENGTH;
+          const d = Math.abs(objX);
+
+          let imgX = Infinity;
+          let isInfinity = false;
+          let m = 1;
+
+          if (Math.abs(objX + f) < 0.1) {
+            isInfinity = true;
+            m = Infinity;
+          } else {
+            imgX = (f * objX) / (objX + f);
+            m = imgX / objX;
+          }
+
+          const isRealImage = !isInfinity && imgX > 0;
+          const isVirtualImage = !isInfinity && imgX < 0;
+
+          const isScreenMatched = showScreen && isRealImage && Math.abs(screenX - imgX) < 10;
+          const blurAmount = isRealImage && showScreen ? Math.min(Math.abs(screenX - imgX) * 0.25, 12) : 0;
+
+          // Logic kéo thả Drag&Drop cho Vật và Màn hứng
+          useEffect(() => {
+            const handleGlobalMove = (e) => {
+              if (!isDraggingObj && !isDraggingScreen) return;
+              if (e.cancelable) e.preventDefault(); // Chống cuộn trang khi kéo ngang
+              
+              const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+              if (svgRef.current) {
+                const rect = svgRef.current.getBoundingClientRect();
+                const scaleX = SVG_WIDTH / rect.width;
+                const svgX = (clientX - rect.left) * scaleX;
+                
+                let newMathX = Math.round(svgX - SVG_WIDTH / 2);
+
+                if (isDraggingObj) {
+                  // Kéo Vật (Chỉ chạy bên trái kính)
+                  setObjX(Math.max(-380, Math.min(-20, newMathX)));
+                } else if (isDraggingScreen) {
+                  // Kéo Màn (Chỉ chạy bên phải kính)
+                  setScreenX(Math.max(20, Math.min(380, newMathX)));
+                }
+              }
+            };
+            
+            const handleGlobalEnd = () => {
+              setIsDraggingObj(false);
+              setIsDraggingScreen(false);
+            };
+
+            if (isDraggingObj || isDraggingScreen) {
+              window.addEventListener('mousemove', handleGlobalMove);
+              window.addEventListener('mouseup', handleGlobalEnd);
+              window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+              window.addEventListener('touchend', handleGlobalEnd);
+            }
+
+            return () => {
+              window.removeEventListener('mousemove', handleGlobalMove);
+              window.removeEventListener('mouseup', handleGlobalEnd);
+              window.removeEventListener('touchmove', handleGlobalMove);
+              window.removeEventListener('touchend', handleGlobalEnd);
+            };
+          }, [isDraggingObj, isDraggingScreen]);
+
+          const feedbackMsg = useMemo(() => {
+            if (lensType === 'concave') return "Kính phân kì hô biến vật thành ẢNH ẢO 👻: nhỏ xíu, cùng chiều. Đừng cố kéo màn hứng làm chi cho mệt! 🙅‍♂️";
+            if (isInfinity) return "CẢNH BÁO ⚠️: Vật lọt đúng tiêu điểm (d=f). Tia sáng bay ra vô cực vũ trụ mất tiêu, không có ảnh đâu! 🚀";
+            if (isVirtualImage) return "Vật đứng sát kính (d<f) kìa! ẢNH ẢO 👻 khổng lồ xuất hiện phía sau, phải nhìn xuyên qua kính mới thấy được! 🧐";
+            if (isRealImage) {
+              if (!showScreen) return "Ảnh thật 🍎 đang bay lơ lửng bên kia kính. Bật màn lên hứng lẹ bạn ơi! 🎬";
+              if (isScreenMatched) return "BINGO!! 🎯 Màn đặt chuẩn không cần chỉnh! Ảnh nét căng đét! Cho 10 điểm thực hành! 🏆";
+              return "Ảnh trên màn mờ câm rồi 😵‍💫 Cầm thẳng Màn Hứng Ảnh vuốt qua lại tìm đúng tiêu cự nét đi nào!";
+            }
+            return "";
+          }, [lensType, isInfinity, isVirtualImage, isRealImage, showScreen, isScreenMatched]);
+
+          const presetPositions = () => {
+            const btnClass = "px-3 py-1.5 text-xs sm:text-sm font-bold bg-white text-indigo-600 border-2 border-indigo-200 rounded-lg hover:bg-indigo-50 active:scale-95 transition-all shadow-sm";
+            if (lensType === 'concave') {
+              return (
+                <div className="flex gap-2 flex-wrap mt-2">
+                  <button onClick={() => setObjX(-300)} className={btnClass}>📍 Vị trí bất kỳ</button>
+                </div>
+              );
+            }
+            return (
+              <div className="flex gap-2 flex-wrap mt-2">
+                <button onClick={() => {setObjX(-f * 2.5); setScreenX((f * (-f*2.5)) / (-f*2.5 + f));}} className={btnClass}>Siêu xa (d&gt;2f)</button>
+                <button onClick={() => {setObjX(-f * 2); setScreenX(f * 2);}} className={btnClass}>Gấp đôi (d=2f)</button>
+                <button onClick={() => {setObjX(-f * 1.5); setScreenX((f * (-f*1.5)) / (-f*1.5 + f));}} className={btnClass}>Ở giữa (f&lt;d&lt;2f)</button>
+                <button onClick={() => setObjX(-f)} className="px-3 py-1.5 text-xs sm:text-sm font-bold bg-red-50 text-red-600 border-2 border-red-200 rounded-lg hover:bg-red-100 active:scale-95 transition-all shadow-sm">⚠️ Điểm mù (d=f)</button>
+                <button onClick={() => setObjX(-f * 0.5)} className="px-3 py-1.5 text-xs sm:text-sm font-bold bg-purple-50 text-purple-600 border-2 border-purple-200 rounded-lg hover:bg-purple-100 active:scale-95 transition-all shadow-sm">👻 Cận kề (d&lt;f)</button>
+              </div>
+            );
+          };
+
+          return (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                
+                {/* Khung mô phỏng SVG */}
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border-2 border-indigo-100 overflow-hidden relative select-none">
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-2 p-1.5 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 z-10">
+                    <button onClick={() => {setLensType('convex'); setObjX(-300);}} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-transform active:scale-95 ${lensType === 'convex' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>🔍 Hội tụ</button>
+                    <button onClick={() => {setLensType('concave'); setObjX(-300);}} className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition-transform active:scale-95 ${lensType === 'concave' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>👓 Phân kì</button>
+                  </div>
+
+                  <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-600 border border-amber-200 shadow-sm animate-bounce">
+                    👆 Chạm & Kéo thẳng Vật (🍎) và Màn Hứng (🎬)!
+                  </div>
+
+                  <div className="w-full aspect-[4/3] sm:aspect-video bg-grid-pattern touch-none">
+                    <svg ref={svgRef} viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} className="w-full h-full">
+                      <defs>
+                        <pattern id="grid2" width="25" height="25" patternUnits="userSpaceOnUse">
+                          <path d="M 25 0 L 0 0 0 25" fill="none" stroke="#f1f5f9" strokeWidth="1"/>
+                        </pattern>
+                        <filter id="blurFilter" x="-50%" y="-50%" width="200%" height="200%">
+                          <feGaussianBlur in="SourceGraphic" stdDeviation={blurAmount} />
+                        </filter>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid2)" />
+                      
+                      <line x1="0" y1={SVG_HEIGHT/2} x2={SVG_WIDTH} y2={SVG_HEIGHT/2} stroke="#94a3b8" strokeWidth="2" strokeDasharray="5,5" />
+                      {[...Array(17)].map((_, i) => {
+                        const x = (i - 8) * 50;
+                        return <line key={i} x1={cx(x)} y1={cy(-5)} x2={cx(x)} y2={cy(5)} stroke="#cbd5e1" strokeWidth="3" strokeLinecap="round" />;
+                      })}
+                      
+                      <LensGraphic type={lensType} />
+                      <FocalPoints f={f} showLabels={true} />
+
+                      {/* TIA SÁNG TẠO ẢNH */}
+                      <g strokeOpacity="0.7">
+                        <line x1={cx(objX)} y1={cy(OBJECT_HEIGHT)} x2={cx(0)} y2={cy(OBJECT_HEIGHT)} stroke="#eab308" strokeWidth="3" pointerEvents="none" />
+                        {lensType === 'convex' ? (
+                          <>
+                             {!isInfinity && <line x1={cx(0)} y1={cy(OBJECT_HEIGHT)} x2={cx(imgX > 0 ? Math.max(imgX, 400) : 400)} y2={cy(imgX > 0 ? (OBJECT_HEIGHT + (0-OBJECT_HEIGHT)/(f-0)*(Math.max(imgX, 400)-0)) : (OBJECT_HEIGHT + (0-OBJECT_HEIGHT)/(f-0)*(400-0)))} stroke="#eab308" strokeWidth="3" pointerEvents="none" />}
+                             {isInfinity && <line x1={cx(0)} y1={cy(OBJECT_HEIGHT)} x2={cx(400)} y2={cy(OBJECT_HEIGHT + (0-OBJECT_HEIGHT)/(f-0)*400)} stroke="#eab308" strokeWidth="3" pointerEvents="none" />}
+                             {isVirtualImage && <line x1={cx(0)} y1={cy(OBJECT_HEIGHT)} x2={cx(-400)} y2={cy(OBJECT_HEIGHT + (0-OBJECT_HEIGHT)/(f-0)*-400)} stroke="#fcd34d" strokeWidth="3" strokeDasharray="6,6" pointerEvents="none" />}
+                          </>
+                        ) : (
+                          <>
+                            <line x1={cx(0)} y1={cy(OBJECT_HEIGHT)} x2={cx(400)} y2={cy(OBJECT_HEIGHT + (0-OBJECT_HEIGHT)/(f-0)*400)} stroke="#eab308" strokeWidth="3" pointerEvents="none" />
+                            <line x1={cx(0)} y1={cy(OBJECT_HEIGHT)} x2={cx(f)} y2={cy(0)} stroke="#fcd34d" strokeWidth="3" strokeDasharray="6,6" pointerEvents="none" />
+                          </>
+                        )}
+
+                        <line x1={cx(objX)} y1={cy(OBJECT_HEIGHT)} x2={cx(0)} y2={cy(0)} stroke="#f97316" strokeWidth="3" pointerEvents="none" />
+                        <line x1={cx(0)} y1={cy(0)} x2={cx(400)} y2={cy(0 + (0-OBJECT_HEIGHT)/(0-objX)*400)} stroke="#f97316" strokeWidth="3" pointerEvents="none" />
+                        {isVirtualImage && <line x1={cx(0)} y1={cy(0)} x2={cx(-400)} y2={cy(0 + (0-OBJECT_HEIGHT)/(0-objX)*-400)} stroke="#fdba74" strokeWidth="3" strokeDasharray="6,6" pointerEvents="none" />}
+                      </g>
+
+                      {/* VẬT - DRAGGABLE */}
+                      <g 
+                        onMouseDown={() => setIsDraggingObj(true)}
+                        onTouchStart={(e) => { e.stopPropagation(); setIsDraggingObj(true); }}
+                        className={`cursor-ew-resize ${isDraggingObj ? 'opacity-80' : ''}`}
+                        style={{ touchAction: 'none' }}
+                      >
+                        {/* Hitbox lớn để dễ chạm vuốt */}
+                        <rect x={cx(objX - 30)} y={cy(OBJECT_HEIGHT + 10)} width="60" height={OBJECT_HEIGHT + 40} fill="transparent" />
+                        <FShape x={objX} y={OBJECT_HEIGHT} height={OBJECT_HEIGHT} isVirtual={false} />
+                        <text x={cx(objX - 25)} y={cy(OBJECT_HEIGHT + 22)} fill="#b45309" fontWeight="900" fontSize="16" pointerEvents="none">Vật 🍎</text>
+                      </g>
+
+                      {/* ẢNH */}
+                      {!isInfinity && (
+                        <>
+                          <FShape x={imgX} y={OBJECT_HEIGHT * m} height={OBJECT_HEIGHT} m={m} isVirtual={isVirtualImage} />
+                          <text x={cx(imgX - (isVirtualImage?30:25))} y={cy(OBJECT_HEIGHT * m + (m>0?25:-15))} fill={isVirtualImage ? "#6b7280" : "#b45309"} fontWeight="900" fontSize="16" pointerEvents="none">
+                            {isVirtualImage ? "Ảo 👻" : "Thật 📸"}
+                          </text>
+                        </>
+                      )}
+
+                      {/* MÀN HỨNG ẢNH - DRAGGABLE */}
+                      {showScreen && (
+                        <g
+                          onMouseDown={() => setIsDraggingScreen(true)}
+                          onTouchStart={(e) => { e.stopPropagation(); setIsDraggingScreen(true); }}
+                          className={`cursor-ew-resize ${isDraggingScreen ? 'opacity-80' : ''}`}
+                          style={{ touchAction: 'none' }}
+                        >
+                          {/* Hitbox cho màn */}
+                          <rect x={cx(screenX - 25)} y={cy(160)} width="50" height="320" fill="transparent" />
+                          
+                          <rect x={cx(screenX - 5)} y={cy(160)} width="10" height="320" fill="#475569" rx="3" pointerEvents="none" />
+                          <rect x={cx(screenX - 20)} y={cy(-160)} width="40" height="12" fill="#1e293b" rx="4" pointerEvents="none" />
+                          
+                          {isRealImage && (
+                            <g filter={blurAmount > 0 ? "url(#blurFilter)" : ""} transform={`translate(${cx(screenX)}, ${cy(0)})`} pointerEvents="none">
+                              <g transform={`scale(${Math.abs(screenX/objX)}, ${screenX/objX})`} opacity={blurAmount > 5 ? 0.3 : 1}>
+                                 <path d={`M 0 0 L 0 ${-OBJECT_HEIGHT} L 22 ${-OBJECT_HEIGHT} L 22 ${-OBJECT_HEIGHT+12} L 12 ${-OBJECT_HEIGHT+12} L 12 ${-OBJECT_HEIGHT+28} L 20 ${-OBJECT_HEIGHT+28} L 20 ${-OBJECT_HEIGHT+40} L 12 ${-OBJECT_HEIGHT+40} L 12 0 Z`} fill="#ef4444" />
+                              </g>
+                            </g>
+                          )}
+                        </g>
+                      )}
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Bảng điều khiển */}
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-indigo-100 p-4 sm:p-5 flex flex-col gap-5">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <h2 className="font-extrabold text-lg sm:text-xl text-gray-800 flex items-center gap-2"><IconMonitor/> Trạm Điều Khiển</h2>
+                    <button onClick={reset} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors active:scale-95" title="Chơi lại từ đầu"><IconReset/></button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Slider Di chuyển Vật */}
+                    <div className={`bg-orange-50 p-3 sm:p-4 rounded-xl border transition-all ${isDraggingObj ? 'border-orange-400 ring-2 ring-orange-200' : 'border-orange-100 shadow-sm'}`}>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-extrabold text-orange-900">Kéo thanh trượt / Vuốt Vật</label>
+                        <span className="text-xs font-bold text-white bg-orange-500 px-2 py-1 rounded-lg shadow-sm">d = {d.toFixed(0)}</span>
+                      </div>
+                      <input type="range" min="-380" max="-20" value={objX} onChange={(e) => setObjX(Number(e.target.value))} 
+                        className="w-full h-3 bg-orange-200 rounded-lg appearance-none cursor-pointer accent-orange-600 focus:ring-2 focus:ring-orange-400 mb-2" />
+                      {presetPositions()}
+                    </div>
+
+                    {/* Slider Màn hứng ảnh */}
+                    <div className={`p-3 sm:p-4 rounded-xl border shadow-sm transition-all duration-300 ${!showScreen ? 'opacity-60 bg-gray-100 border-gray-200 grayscale' : isDraggingScreen ? 'bg-slate-50 border-slate-400 ring-2 ring-slate-200' : 'bg-slate-100 border-slate-300'}`}>
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="text-sm font-extrabold text-slate-800 flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" checked={showScreen} onChange={e => setShowScreen(e.target.checked)} className="w-5 h-5 rounded text-slate-700 focus:ring-slate-500" />
+                          Kéo Màn hứng ảnh 🎬
+                        </label>
+                        <span className="text-xs font-mono font-bold bg-white px-2 py-1 rounded-md border border-slate-300 shadow-sm">{screenX}</span>
+                      </div>
+                      <input type="range" min="20" max="380" value={screenX} onChange={(e) => setScreenX(Number(e.target.value))} disabled={!showScreen} 
+                        className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-slate-700 focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                    
+                    {/* Thông số kỹ thuật */}
+                    <div className="bg-indigo-50 p-3 rounded-xl text-sm grid grid-cols-2 gap-3 border border-indigo-100">
+                      <div className="text-indigo-800 font-semibold">📍 Cách kính (d'):</div>
+                      <div className="font-mono font-bold text-right text-indigo-900">{isInfinity ? '∞ Vũ trụ' : Math.abs(imgX).toFixed(1)}</div>
+                      <div className="text-indigo-800 font-semibold">🔎 Phóng đại (k):</div>
+                      <div className="font-mono font-bold text-right text-indigo-900">{isInfinity ? '∞' : m.toFixed(2)}x</div>
+                    </div>
+                  </div>
+
+                  {/* Phản hồi trạng thái */}
+                  <div className={`mt-auto rounded-xl p-4 border-2 shadow-inner transition-colors duration-500 ${isScreenMatched ? 'bg-green-100 border-green-300' : isVirtualImage ? 'bg-purple-100 border-purple-300' : 'bg-blue-50 border-blue-200'}`}>
+                    <h3 className={`text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${isScreenMatched ? 'text-green-800' : isVirtualImage ? 'text-purple-800' : 'text-blue-800'}`}>
+                      {isScreenMatched ? "🎉 QUÁ CHUẨN!" : "🤖 TRỢ LÝ BÁO CÁO:"}
+                    </h3>
+                    <p className={`text-sm sm:text-base font-medium leading-snug ${isScreenMatched ? 'text-green-900' : isVirtualImage ? 'text-purple-900' : 'text-blue-900'}`}>{feedbackMsg}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Thông tin bổ sung */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <SummaryTable />
+                <QuestionsSection />
+              </div>
+            </div>
+          );
+        }
+
+        // --- STATIC COMPONENTS ---
+        function SummaryTable() {
+          return (
+            <div className="bg-white rounded-2xl shadow-md border-2 border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
+                <h3 className="font-extrabold text-indigo-900">📜 Bí Kíp Bắt Ảnh (Cấm quay cóp)</h3>
+              </div>
+              <div className="overflow-x-auto custom-scrollbar pb-2">
+                <table className="w-full text-sm text-left min-w-[500px]">
+                  <thead className="bg-white text-gray-500 text-xs uppercase font-black border-b-2">
+                    <tr>
+                      <th className="px-4 py-3">Loại Kính</th>
+                      <th className="px-4 py-3">Đứng đâu? (d)</th>
+                      <th className="px-4 py-3">Bản chất</th>
+                      <th className="px-4 py-3">Độ Lớn</th>
+                      <th className="px-4 py-3 text-center">Có màn hứng?</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    <tr className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 font-extrabold text-blue-700" rowSpan="5">Hội tụ 🔍</td><td className="px-4 py-3 font-semibold text-gray-700">Rất xa (d &gt; 2f)</td><td className="px-4 py-3 text-blue-600 font-bold">Thật 📸, ngược chiều</td><td className="px-4 py-3 text-gray-600">Nhỏ hơn</td><td className="px-4 py-3 text-center text-xl">✅</td></tr>
+                    <tr className="bg-gray-50/50 hover:bg-gray-50 transition-colors"><td className="px-4 py-3 font-semibold text-gray-700">Gấp đôi (d = 2f)</td><td className="px-4 py-3 text-blue-600 font-bold">Thật 📸, ngược chiều</td><td className="px-4 py-3 text-gray-600 font-bold">Bằng y đúc</td><td className="px-4 py-3 text-center text-xl">✅</td></tr>
+                    <tr className="hover:bg-gray-50 transition-colors"><td className="px-4 py-3 font-semibold text-gray-700">Lấp lửng (f &lt; d &lt; 2f)</td><td className="px-4 py-3 text-blue-600 font-bold">Thật 📸, ngược chiều</td><td className="px-4 py-3 text-orange-600 font-extrabold">Bự hơn</td><td className="px-4 py-3 text-center text-xl">✅</td></tr>
+                    <tr className="bg-red-50/30 hover:bg-red-50 transition-colors"><td className="px-4 py-3 font-bold text-red-600">Điểm mù (d = f)</td><td className="px-4 py-3 text-gray-500 italic">Mù mịt, tia song song</td><td className="px-4 py-3 text-gray-500 italic">Bay ra vô cực</td><td className="px-4 py-3 text-center text-xl">❌</td></tr>
+                    <tr className="bg-purple-50/30 hover:bg-purple-50 transition-colors"><td className="px-4 py-3 font-bold text-purple-600">Sát rạt (d &lt; f)</td><td className="px-4 py-3 text-purple-600 font-bold">Ảo 👻, cùng chiều</td><td className="px-4 py-3 text-purple-700 font-extrabold text-lg">Khổng lồ</td><td className="px-4 py-3 text-center text-xl">❌</td></tr>
+                    <tr className="border-t-4 border-indigo-100 hover:bg-gray-50 transition-colors"><td className="px-4 py-4 font-extrabold text-teal-700">Phân kì 👓</td><td className="px-4 py-4 font-semibold text-gray-700">Bất chấp mọi nơi</td><td className="px-4 py-4 text-purple-600 font-bold">Luôn Ảo 👻, cùng chiều</td><td className="px-4 py-4 text-teal-600 font-bold">Nhỏ xíu</td><td className="px-4 py-4 text-center text-xl">❌</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        }
+
+        function QuestionsSection() {
+          return (
+            <div className="bg-white rounded-2xl shadow-md border-2 border-gray-100 p-4 sm:p-5 flex flex-col h-full">
+              <h3 className="font-extrabold text-rose-800 mb-4 flex items-center gap-2 text-lg">Hỏi Xoáy Đáp Xoay 🧠🌪️</h3>
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-sm text-gray-700 custom-scrollbar max-h-[220px]">
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p><strong>1.</strong> Thấy một cái ảnh mọc ngược đầu (ngược chiều) với vật, đố bạn biết nó là ảnh Thật hay Ảo? Kính gì sinh ra nó? 🙃</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p><strong>2.</strong> Tại sao đưa vật vô sát thấu kính hội tụ (d&lt;f) thì màn hứng ảnh bỗng nhiên "tắt điện"? Ảnh chạy đi đâu mất rồi? 🏃‍♂️💨</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p><strong>3.</strong> Cùng là "Ảnh Ảo", nhưng ảnh của thấu kính hội tụ và phân kì khác nhau một trời một vực chỗ nào? 🥊</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                <p className="text-rose-600 font-medium text-xs leading-relaxed">
+                  <strong>Gợi ý lụi:</strong> Đừng vội lật sách, hãy bấm nút chỉnh thông số ở trên mô phỏng để tự đi tìm chân lý nhé! Khoa học là phải test! 🧪
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        // Render ứng dụng
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PhysicsLab />);
+    </script>
+</body>
+</html>

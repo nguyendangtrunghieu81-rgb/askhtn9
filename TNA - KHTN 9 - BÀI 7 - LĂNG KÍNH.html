@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thí nghiệm ảo: Lăng Kính Kỳ Diệu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- ICONS (Thay thế cho lucide-react để chạy trực tiếp trên trình duyệt) ---
+        const Icon = ({ children, size = 24, className = "" }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const Settings = (p) => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></Icon>;
+        const Info = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></Icon>;
+        const RefreshCw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+        const Eye = (p) => <Icon {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></Icon>;
+        const MousePointer2 = (p) => <Icon {...p}><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></Icon>;
+        const CheckCircle2 = (p) => <Icon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
+        const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+        const Sparkles = (p) => <Icon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Icon>;
+        const ChevronDown = (p) => <Icon {...p}><polyline points="6 9 12 15 18 9"/></Icon>;
+        const ChevronUp = (p) => <Icon {...p}><polyline points="18 15 12 9 6 15"/></Icon>;
+
+        // --- MAIN COMPONENT ---
+        const PrismExperiment = () => {
+          const [activeTab, setActiveTab] = useState(1);
+          const [screenX, setScreenX] = useState(650);
+          const [showLabels, setShowLabels] = useState(true);
+          const [showRays, setShowRays] = useState(true);
+          
+          // Mode 2 states
+          const [filterMode, setFilterMode] = useState('none'); // 'none', 'red', 'violet', 'compare'
+          
+          // Student observation
+          const [observationMode1, setObservationMode1] = useState('');
+          const [observationMode2, setObservationMode2] = useState('');
+
+          // Quiz states
+          const [revealedAnswers, setRevealedAnswers] = useState({});
+
+          // Physics & SVG Geometry Constants
+          const VIEW_W = 850;
+          const VIEW_H = 450;
+          const PRISM_APEX_Y = 100;
+          const PRISM_BASE_Y = 320;
+          
+          const PRISM_TOP = { x: 400, y: PRISM_APEX_Y };
+          const PRISM_BL = { x: 290, y: PRISM_BASE_Y };
+          const PRISM_BR = { x: 510, y: PRISM_BASE_Y };
+
+          const INCIDENT_START = { x: 50, y: 200 };
+          const INCIDENT_Y = 200;
+          const INCIDENT_HIT_X = 400 - (INCIDENT_Y - PRISM_APEX_Y) * 0.5; 
+          
+          const SPECTRUM = [
+            { id: 'red', name: 'Đỏ', hex: '#ff3333', outY: 215, slope: 0.15 },
+            { id: 'orange', name: 'Cam', hex: '#ff9900', outY: 218, slope: 0.19 },
+            { id: 'yellow', name: 'Vàng', hex: '#ffff00', outY: 221, slope: 0.23 },
+            { id: 'green', name: 'Lục', hex: '#33ff33', outY: 224, slope: 0.28 },
+            { id: 'blue', name: 'Lam', hex: '#33ccff', outY: 227, slope: 0.33 },
+            { id: 'indigo', name: 'Chàm', hex: '#6633ff', outY: 230, slope: 0.38 },
+            { id: 'violet', name: 'Tím', hex: '#cc33ff', outY: 233, slope: 0.44 },
+          ].map(color => {
+            const outX = 400 + (color.outY - PRISM_APEX_Y) * 0.5;
+            return { ...color, outX };
+          });
+
+          const QUIZ_DATA = [
+            { q: "Chùm sáng trắng qua lăng kính bị đổi hướng như thế nào?", a: "Bị bẻ cong (khúc xạ) về phía phần đáy của lăng kính nè! 📉" },
+            { q: "Hãy kể tên 7 màu cơ bản theo thứ tự từ tia lệch ít đến tia lệch nhiều.", a: "Đỏ 🔴, Cam 🟠, Vàng 🟡, Lục 🟢, Lam 🔵, Chàm 🌌, Tím 🟣! (Bí kíp: Đỏ lệch ít nhất, Tím lệch nhiều nhất nha!)" },
+            { q: "Hiện tượng nhiều màu xuất hiện trên màn cho ta kết luận gì về thành phần của chùm sáng trắng?", a: "Chứng tỏ ánh sáng trắng thực chất là 'tập hợp' của một ban nhạc gồm rất nhiều ánh sáng màu khác nhau! 🎸🌈" },
+            { q: "Nếu dùng kính lọc màu đỏ che trước nguồn sáng, ánh sáng có tạo thành cầu vồng không?", a: "Không đâu! Kính đỏ đã 'lọc' chặn hết các màu khác, chỉ cho mỗi anh Đỏ đi qua. Thế nên màn hứng chỉ có 1 vạch sáng đỏ thôi. 🛑" },
+            { q: "Tia sáng màu Tím và màu Đỏ, tia nào bị bẻ cong nhiều hơn khi qua lăng kính?", a: "Tia Tím bị bẻ cong 'gắt' hơn nhiều! Lăng kính làm tia tím lệch nhiều hơn tia đỏ. 🟣 > 🔴" },
+            { q: "Khi kéo màn hứng ra xa lăng kính, góc lệch của tia sáng có lớn hơn không?", a: "Không hề! Góc lệch vẫn giữ nguyên, chỉ là vệt sáng đi xa hơn nên dải màu nhìn có vẻ giãn rộng ra thôi! 🎬" },
+          ];
+
+          const toggleAnswer = (index) => {
+            setRevealedAnswers(prev => ({ ...prev, [index]: !prev[index] }));
+          };
+
+          const getScreenHitY = (color, currentScreenX) => {
+            return color.outY + color.slope * (currentScreenX - color.outX);
+          };
+
+          const topColor = SPECTRUM[0];
+          const bottomColor = SPECTRUM[SPECTRUM.length - 1];
+          const topScreenY = getScreenHitY(topColor, screenX);
+          const bottomScreenY = getScreenHitY(bottomColor, screenX);
+
+          const resetMode1 = () => {
+            setScreenX(650);
+            setShowLabels(true);
+            setShowRays(true);
+            setObservationMode1('');
+          };
+
+          const resetMode2 = () => {
+            setFilterMode('none');
+            setScreenX(650);
+            setObservationMode2('');
+          };
+
+          const getVisibleColors = () => {
+            if (activeTab === 1) return SPECTRUM;
+            if (filterMode === 'none') return SPECTRUM;
+            if (filterMode === 'red') return SPECTRUM.filter(c => c.id === 'red');
+            if (filterMode === 'violet') return SPECTRUM.filter(c => c.id === 'violet');
+            if (filterMode === 'compare') return SPECTRUM.filter(c => c.id === 'red' || c.id === 'violet');
+            return SPECTRUM;
+          };
+
+          const visibleColors = getVisibleColors();
+
+          const getIncidentColor = () => {
+            if (activeTab === 1) return 'white';
+            if (filterMode === 'red') return '#ff3333';
+            if (filterMode === 'violet') return '#cc33ff';
+            if (filterMode === 'compare') return '#ffffff';
+            return 'white';
+          };
+
+          const getFeedbackMessage = () => {
+            if (activeTab === 1) {
+              if (screenX < 600) return "Ôi chao! Màn đang ở gần quá, các màu còn 'ôm' lấy nhau chưa tách rời kìa! 🤏";
+              if (screenX > 730) return "Đỉnh quá! Màn ở xa giúp dải quang phổ phân tách rõ mồn một! 🤩";
+              return "Kéo thanh trượt để di chuyển màn hứng nhé! Kéo ra xa xem điều kỳ diệu gì xảy ra nào ✨";
+            } else {
+              if (filterMode === 'none') return "Ánh sáng trắng đi qua lăng kính bị tán sắc thành dải cầu vồng rực rỡ! 🌈";
+              if (filterMode === 'red') return "Kính lọc ĐỎ chỉ cho anh Đỏ đi qua. Thấy không? Ánh sáng đơn sắc KHÔNG bị tách màu nữa! 🛑";
+              if (filterMode === 'violet') return "Kính lọc TÍM chỉ cho anh Tím đi qua. Tia đơn sắc không tách màu, nhưng bị bẻ cong rất 'gắt'! 🍇";
+              if (filterMode === 'compare') return "CHẾ ĐỘ SO SÁNH ẢO 😎: Nhìn kĩ nhé! Tia tím (bên dưới) bị lăng kính bẻ cong nhiều hơn tia đỏ (bên trên).";
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-indigo-50/50 text-slate-800 font-sans p-2 sm:p-4 md:p-8">
+              <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+                
+                {/* HEADER */}
+                <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-indigo-700 flex items-center gap-2 sm:gap-3">
+                      <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
+                      Lăng Kính Kỳ Diệu 🌈
+                    </h1>
+                    <p className="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2 font-medium">Phòng thí nghiệm ảo siêu cấp vui nhộn dành cho Thám tử Quang học 🕵️‍♂️</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
+                    <button 
+                      onClick={() => {setActiveTab(1); setScreenX(650);}}
+                      className={`px-4 sm:px-5 py-3 rounded-xl font-bold transition-all w-full sm:w-auto ${activeTab === 1 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 scale-100 sm:scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      1. Phép Thuật Cầu Vồng 🌈
+                    </button>
+                    <button 
+                      onClick={() => {setActiveTab(2); setScreenX(650);}}
+                      className={`px-4 sm:px-5 py-3 rounded-xl font-bold transition-all w-full sm:w-auto ${activeTab === 2 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 scale-100 sm:scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      2. Kính Lọc Xịn Sò 🔴🟣
+                    </button>
+                  </div>
+                </header>
+
+                {/* MAIN WORKSPACE */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                  
+                  {/* SIMULATION CANVAS (Left 2/3) */}
+                  <div className="lg:col-span-2 bg-slate-900 rounded-3xl shadow-inner border-4 border-slate-800 overflow-hidden relative flex flex-col group min-h-[350px]">
+                    
+                    {/* Feedback Toast */}
+                    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white p-3 rounded-xl text-xs sm:text-sm flex items-start gap-3 z-10 shadow-lg transition-all">
+                      <Info className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5 animate-bounce" />
+                      <p className="font-medium leading-relaxed">{getFeedbackMessage()}</p>
+                    </div>
+
+                    <div className="flex-1 w-full flex items-center justify-center p-2 sm:p-4 mt-16 sm:mt-12 overflow-x-auto touch-pan-x">
+                      <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="w-full h-auto min-w-[600px] max-h-[500px] drop-shadow-2xl transition-all duration-300">
+                        <defs>
+                          <linearGradient id="spectrumGradient" x1="0" y1="0" x2="0" y2="1">
+                            {SPECTRUM.map((c, i) => (
+                              <stop key={c.name} offset={`${(i / (SPECTRUM.length - 1)) * 100}%`} stopColor={c.hex} />
+                            ))}
+                          </linearGradient>
+                          
+                          <linearGradient id="redFilter" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#880000" stopOpacity="0.9"/>
+                            <stop offset="50%" stopColor="#ff3333" stopOpacity="0.7"/>
+                            <stop offset="100%" stopColor="#880000" stopOpacity="0.9"/>
+                          </linearGradient>
+                          <linearGradient id="violetFilter" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#440066" stopOpacity="0.9"/>
+                            <stop offset="50%" stopColor="#cc33ff" stopOpacity="0.7"/>
+                            <stop offset="100%" stopColor="#440066" stopOpacity="0.9"/>
+                          </linearGradient>
+                        </defs>
+
+                        {/* Grid Lines */}
+                        <g stroke="#ffffff" strokeOpacity="0.05" strokeWidth="1">
+                          {Array.from({length: 20}).map((_, i) => <line key={`v${i}`} x1={i*50} y1="0" x2={i*50} y2={VIEW_H} />)}
+                          {Array.from({length: 10}).map((_, i) => <line key={`h${i}`} x1="0" y1={i*50} x2={VIEW_W} y2={i*50} />)}
+                        </g>
+
+                        {/* Light Source */}
+                        <rect x="10" y="150" width="60" height="100" fill="#222" rx="8" stroke="#444" strokeWidth="3" />
+                        <rect x="70" y="195" width="10" height="10" fill="#111" />
+                        <circle cx="40" cy="200" r="15" fill={getIncidentColor()} filter="blur(4px)" opacity="0.8"/>
+                        <text x="40" y="275" fill="#aaa" fontSize="16" fontWeight="bold" textAnchor="middle">Đèn LED</text>
+
+                        {/* Filters */}
+                        {activeTab === 2 && filterMode !== 'none' && filterMode !== 'compare' && (
+                          <g className="transition-all duration-300">
+                            <rect x="120" y="160" width="18" height="80" fill={`url(#${filterMode}Filter)`} rx="4" stroke={filterMode==='red'?'#ff9999':'#ff99ff'} strokeWidth="2"/>
+                            <text x="129" y="265" fill="#ddd" fontSize="14" fontWeight="bold" textAnchor="middle">Kính lọc</text>
+                          </g>
+                        )}
+
+                        {/* Prism */}
+                        <polygon 
+                          points={`${PRISM_TOP.x},${PRISM_TOP.y} ${PRISM_BL.x},${PRISM_BL.y} ${PRISM_BR.x},${PRISM_BR.y}`} 
+                          fill="rgba(255, 255, 255, 0.1)" 
+                          stroke="rgba(100, 255, 255, 0.6)" 
+                          strokeWidth="4"
+                          strokeLinejoin="round"
+                        />
+                        <text x="400" y="350" fill="#aaa" fontSize="16" fontWeight="bold" textAnchor="middle">Lăng kính</text>
+                        
+                        {/* RAY TRACING */}
+                        <line 
+                          x1={80} y1={INCIDENT_Y} 
+                          x2={INCIDENT_HIT_X} y2={INCIDENT_Y} 
+                          stroke={getIncidentColor()} 
+                          strokeWidth="5" 
+                          strokeLinecap="round"
+                          style={{ filter: "drop-shadow(0px 0px 6px rgba(255,255,255,0.9))" }}
+                        />
+
+                        {visibleColors.map((color) => {
+                          const screenHitY = getScreenHitY(color, screenX);
+                          return (
+                            <g key={color.id}>
+                              <line 
+                                x1={INCIDENT_HIT_X} y1={INCIDENT_Y} 
+                                x2={color.outX} y2={color.outY} 
+                                stroke={color.hex} 
+                                strokeWidth={showRays ? "2.5" : "0"} 
+                                opacity="0.9"
+                              />
+                              <line 
+                                x1={color.outX} y1={color.outY} 
+                                x2={screenX} y2={screenHitY} 
+                                stroke={color.hex} 
+                                strokeWidth={showRays ? "3" : "0"} 
+                                opacity={filterMode === 'compare' ? 1 : 0.9}
+                              />
+                              {showLabels && (
+                                <g transform={`translate(${screenX + 25}, ${screenHitY})`}>
+                                  <line x1="-15" y1="0" x2="0" y2="0" stroke={color.hex} strokeWidth="1" opacity="0.5"/>
+                                  <text 
+                                    x="5" y="5" 
+                                    fill={color.hex} 
+                                    fontSize={activeTab === 2 || screenX > 600 ? "16" : "13"} 
+                                    fontWeight="bold"
+                                    style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                                  >
+                                    {color.name}
+                                  </text>
+                                </g>
+                              )}
+                            </g>
+                          );
+                        })}
+
+                        {/* SCREEN */}
+                        <g transform={`translate(${screenX}, 0)`} className="transition-transform duration-100 ease-out">
+                          <rect x="-6" y="50" width="12" height="320" fill="#cbd5e1" rx="4" />
+                          <rect x="-20" y="370" width="40" height="12" fill="#94a3b8" rx="4" />
+                          
+                          {(activeTab === 1 || filterMode === 'none') ? (
+                             <rect 
+                               x="-6" 
+                               y={topScreenY - 5} 
+                               width="12" 
+                               height={(bottomScreenY - topScreenY) + 10} 
+                               fill="url(#spectrumGradient)" 
+                               opacity="0.95"
+                               filter="blur(1px)"
+                               rx="2"
+                             />
+                          ) : filterMode === 'compare' ? (
+                             <g>
+                               <circle cx="0" cy={getScreenHitY(SPECTRUM[0], screenX)} r="8" fill="#ff3333" filter="blur(1px)"/>
+                               <circle cx="0" cy={getScreenHitY(SPECTRUM[6], screenX)} r="8" fill="#cc33ff" filter="blur(1px)"/>
+                             </g>
+                          ) : (
+                            <circle 
+                               cx="0" 
+                               cy={getScreenHitY(SPECTRUM.find(c => c.id === filterMode), screenX)} 
+                               r="10" 
+                               fill={SPECTRUM.find(c => c.id === filterMode).hex} 
+                               filter="blur(2px)"
+                             />
+                          )}
+                          <text x="0" y="35" fill="#ccc" fontSize="16" fontWeight="bold" textAnchor="middle">Màn hứng</text>
+                        </g>
+                      </svg>
+                    </div>
+                    
+                    {/* Screen Distance Slider */}
+                    <div className="bg-slate-800/90 backdrop-blur-sm p-4 sm:p-5 border-t border-slate-700 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 z-10">
+                      <span className="text-slate-200 text-sm sm:text-base font-bold whitespace-nowrap">Vị trí màn hứng ↔️ :</span>
+                      <input 
+                        type="range" 
+                        min="550" max="750" 
+                        value={screenX} 
+                        onChange={(e) => setScreenX(Number(e.target.value))}
+                        className="w-full accent-indigo-500 h-3 sm:h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="text-indigo-300 text-xs sm:text-sm font-bold w-full sm:w-20 text-center sm:text-right bg-slate-900/50 py-1 px-2 rounded">
+                        {screenX < 620 ? 'Rất gần' : screenX > 700 ? 'Khá xa' : 'Vừa vặn'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CONTROLS & OBSERVATION PANEL (Right 1/3) */}
+                  <div className="space-y-4 sm:space-y-6 flex flex-col">
+                    
+                    {/* Control Box */}
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 sm:p-6 flex-1">
+                      <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-indigo-600" />
+                        Bảng điều khiển
+                      </h3>
+                      
+                      {activeTab === 1 && (
+                        <div className="space-y-4">
+                          <label className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors border border-slate-100 shadow-sm">
+                            <input 
+                              type="checkbox" 
+                              checked={showRays} 
+                              onChange={(e) => setShowRays(e.target.checked)}
+                              className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                            />
+                            <span className="text-slate-700 font-bold text-sm sm:text-base">Hiện tia sáng tới màn ✨</span>
+                          </label>
+                          
+                          <label className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50 rounded-xl hover:bg-indigo-50 transition-colors border border-slate-100 shadow-sm">
+                            <input 
+                              type="checkbox" 
+                              checked={showLabels} 
+                              onChange={(e) => setShowLabels(e.target.checked)}
+                              className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                            />
+                            <span className="text-slate-700 font-bold text-sm sm:text-base">Gắn nhãn tên màu 🏷️</span>
+                          </label>
+
+                          <button onClick={resetMode1} className="w-full py-3 mt-4 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                            <RefreshCw className="w-5 h-5" /> Đặt lại từ đầu
+                          </button>
+                        </div>
+                      )}
+
+                      {activeTab === 2 && (
+                        <div className="space-y-4">
+                          <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wide">Chọn Kính Lọc:</p>
+                          
+                          <div className="space-y-3">
+                            <button 
+                              onClick={() => setFilterMode('none')}
+                              className={`w-full p-4 rounded-xl border-2 text-left flex items-center gap-3 transition-all ${filterMode === 'none' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-slate-100 bg-slate-50 hover:border-indigo-200'}`}
+                            >
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 via-green-500 to-blue-500 shrink-0"></div>
+                              <span className="font-bold text-slate-700 text-sm sm:text-base">Ánh sáng trắng (Trơn)</span>
+                            </button>
+                            
+                            <button 
+                              onClick={() => setFilterMode('red')}
+                              className={`w-full p-4 rounded-xl border-2 text-left flex items-center gap-3 transition-all ${filterMode === 'red' ? 'border-red-500 bg-red-50 shadow-md' : 'border-slate-100 bg-slate-50 hover:border-red-200'}`}
+                            >
+                              <div className="w-5 h-5 rounded-full bg-red-500 shrink-0"></div>
+                              <span className="font-bold text-slate-700 text-sm sm:text-base">Kính lọc màu ĐỎ 🔴</span>
+                            </button>
+                            
+                            <button 
+                              onClick={() => setFilterMode('violet')}
+                              className={`w-full p-4 rounded-xl border-2 text-left flex items-center gap-3 transition-all ${filterMode === 'violet' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-slate-100 bg-slate-50 hover:border-purple-200'}`}
+                            >
+                              <div className="w-5 h-5 rounded-full bg-purple-500 shrink-0"></div>
+                              <span className="font-bold text-slate-700 text-sm sm:text-base">Kính lọc màu TÍM 🟣</span>
+                            </button>
+
+                            <div className="pt-4 mt-2">
+                              <button 
+                                onClick={() => setFilterMode(filterMode === 'compare' ? 'none' : 'compare')}
+                                className={`w-full p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all ${filterMode === 'compare' ? 'border-orange-500 bg-orange-100 text-orange-900 shadow-md' : 'border-slate-800 bg-slate-800 text-white hover:bg-slate-700'}`}
+                              >
+                                <span className="font-bold flex items-center gap-2 text-sm sm:text-base">
+                                  <Eye className="w-5 h-5" /> So sánh góc lệch Đỏ & Tím
+                                </span>
+                                {filterMode === 'compare' && <CheckCircle2 className="w-6 h-6 text-orange-600 shrink-0" />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Observation Box */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-3xl shadow-sm border border-indigo-100 p-5 sm:p-6">
+                      <h3 className="font-bold text-lg text-indigo-900 mb-3 flex items-center gap-2">
+                        <MousePointer2 className="w-5 h-5 text-indigo-600" />
+                        Ghi chép của Thám tử 🕵️‍♀️
+                      </h3>
+                      {activeTab === 1 ? (
+                        <>
+                          <p className="text-sm font-medium text-indigo-800 mb-3">Chà, ánh sáng trắng qua lăng kính bị biến thành gì thế nhỉ? Thứ tự các màu bạn thấy là gì?</p>
+                          <textarea 
+                            className="w-full h-28 p-4 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 focus:outline-none resize-none text-sm sm:text-base text-slate-700 shadow-inner"
+                            placeholder="Viết phát hiện của bạn vào đây nhé..."
+                            value={observationMode1}
+                            onChange={(e) => setObservationMode1(e.target.value)}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium text-indigo-800 mb-3">Ơ kìa! Ánh sáng qua kính lọc có còn ra cầu vồng không? Và tia màu nào bị bẻ gập xuống nhiều nhất?</p>
+                          <textarea 
+                            className="w-full h-28 p-4 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 focus:outline-none resize-none text-sm sm:text-base text-slate-700 shadow-inner"
+                            placeholder="Ghi lại manh mối của bạn..."
+                            value={observationMode2}
+                            onChange={(e) => setObservationMode2(e.target.value)}
+                          />
+                        </>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* KNOWLEDGE EXPLANATION */}
+                <div className="bg-white rounded-3xl shadow-sm border-2 border-emerald-100 p-5 sm:p-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <BookOpen className="w-32 h-32 text-emerald-500" />
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-emerald-800 mb-6 flex items-center gap-3 relative z-10">
+                    <BookOpen className="w-7 h-7 text-emerald-600" />
+                    Tóm Tắt Bí Kíp Quang Học 📜
+                  </h2>
+                  <div className="grid md:grid-cols-2 gap-4 sm:gap-6 relative z-10 text-slate-700 leading-relaxed">
+                    <div className="bg-gradient-to-b from-emerald-50 to-white p-5 sm:p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+                      <h4 className="font-black text-lg text-emerald-700 mb-3 flex items-center gap-2">
+                        <span className="bg-emerald-200 text-emerald-800 w-8 h-8 rounded-full flex items-center justify-center">1</span>
+                        Tán sắc ánh sáng 🌈
+                      </h4>
+                      <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base">
+                        <li>Ánh sáng trắng là một "đội quân" gồm <strong>rất nhiều ánh sáng màu</strong> khác nhau trộn lẫn lại.</li>
+                        <li>Khi đi qua lăng kính, đội quân này bị tách ra thành dải màu gọi là <strong>quang phổ</strong>.</li>
+                        <li>Thứ tự bị lệch từ ít đến nhiều: <span className="font-bold text-red-500">Đỏ</span>, <span className="font-bold text-orange-500">Cam</span>, <span className="font-bold text-yellow-500">Vàng</span>, <span className="font-bold text-green-500">Lục</span>, <span className="font-bold text-blue-500">Lam</span>, <span className="font-bold text-indigo-500">Chàm</span>, <span className="font-bold text-purple-500">Tím</span>.</li>
+                      </ul>
+                    </div>
+                    <div className="bg-gradient-to-b from-emerald-50 to-white p-5 sm:p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+                      <h4 className="font-black text-lg text-emerald-700 mb-3 flex items-center gap-2">
+                        <span className="bg-emerald-200 text-emerald-800 w-8 h-8 rounded-full flex items-center justify-center">2</span>
+                        Luật bẻ cong (Khúc xạ) 📐
+                      </h4>
+                      <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base">
+                        <li>Ánh sáng <strong>đơn sắc</strong> (ví dụ: đỏ, tím) khi qua lăng kính chỉ bị bẻ cong về phía đáy, <strong>không bị tách màu</strong> nữa.</li>
+                        <li>Lăng kính đối xử không công bằng: <strong>Tia Đỏ bị bẻ lệch ít nhất, còn Tia Tím bị bẻ lệch nhiều nhất!</strong></li>
+                        <li>Việc kéo màn ra xa/lại gần chỉ làm đổi chiều dài vệt sáng trên màn, chứ <strong>không hề làm đổi góc bẻ cong</strong> của tia sáng.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* QUIZ SECTION (INTERACTIVE) */}
+                <div className="bg-slate-900 rounded-3xl shadow-xl p-5 sm:p-8 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-100 mb-6 flex items-center gap-3 border-b border-slate-700 pb-4 relative z-10">
+                    <CheckCircle2 className="w-7 h-7 text-indigo-400" />
+                    Thử Tài Nhớ Dai (Click để xem đáp án) 🧠
+                  </h2>
+                  
+                  <div className="grid md:grid-cols-2 gap-4 sm:gap-6 relative z-10 text-sm sm:text-base">
+                    {QUIZ_DATA.map((item, index) => (
+                      <div key={index} className="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl overflow-hidden hover:border-indigo-500/50 transition-colors">
+                        <button 
+                          onClick={() => toggleAnswer(index)}
+                          className="w-full p-4 sm:p-5 text-left flex justify-between items-start gap-4 focus:outline-none"
+                        >
+                          <span className="font-semibold text-slate-200 leading-snug">
+                            <span className="text-indigo-400 font-black mr-2">Q{index + 1}:</span> 
+                            {item.q}
+                          </span>
+                          <div className="shrink-0 mt-0.5 text-slate-500 bg-slate-800 p-1 rounded-full">
+                            {revealedAnswers[index] ? <ChevronUp className="w-5 h-5 text-indigo-400" /> : <ChevronDown className="w-5 h-5" />}
+                          </div>
+                        </button>
+                        
+                        {/* Answer reveal section */}
+                        <div 
+                          className={`px-4 sm:px-5 overflow-hidden transition-all duration-300 ease-in-out ${revealedAnswers[index] ? 'max-h-40 pb-5 opacity-100' : 'max-h-0 opacity-0'}`}
+                        >
+                          <div className="pt-3 border-t border-slate-700/50 text-indigo-200 font-medium">
+                            <span className="text-emerald-400 font-bold mr-2">Đáp án:</span> 
+                            {item.a}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PrismExperiment />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KHTN 9 - Bài 10 - Kính lúp - Mức 1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; }
+    .katex { font-size: 1.02em; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+// Firebase/local preview shims for opening this file directly in a browser
+const { useState, useEffect, useMemo } = React;
+
+const IconBase = ({ children, size = 24, className = "", ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+);
+const Trophy = (p) => <IconBase {...p}><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M5 6H3a3 3 0 0 0 3 3"/><path d="M19 6h2a3 3 0 0 1-3 3"/></IconBase>;
+const BookOpen = (p) => <IconBase {...p}><path d="M12 7v14"/><path d="M3 5a5 5 0 0 1 7 0v14a5 5 0 0 0-7 0V5Z"/><path d="M14 5a5 5 0 0 1 7 0v14a5 5 0 0 0-7 0V5Z"/></IconBase>;
+const Clock = (p) => <IconBase {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></IconBase>;
+const User = (p) => <IconBase {...p}><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></IconBase>;
+const ShieldCheck = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></IconBase>;
+const Play = (p) => <IconBase {...p}><polygon points="6,4 20,12 6,20"/></IconBase>;
+const CheckCircle2 = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+const XCircle = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></IconBase>;
+const AlertCircle = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></IconBase>;
+const ImageIcon = (p) => <IconBase {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></IconBase>;
+const ArrowRight = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+const LogOut = (p) => <IconBase {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></IconBase>;
+const FileText = (p) => <IconBase {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></IconBase>;
+const CheckSquare = (p) => <IconBase {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></IconBase>;
+const RefreshCcw = (p) => <IconBase {...p}><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.7L21 8"/><path d="M21 3v5h-5"/></IconBase>;
+const Trash2 = (p) => <IconBase {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></IconBase>;
+const AlertTriangle = (p) => <IconBase {...p}><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></IconBase>;
+
+const __fakeListeners = {};
+const __makeTs = (ms) => ({ toMillis: () => ms });
+const initializeApp = (config) => ({ config });
+const getAuth = () => ({ currentUser: { uid: 'local-preview-user' } });
+const signInAnonymously = async () => ({ user: { uid: 'local-preview-user' } });
+const signInWithCustomToken = async () => ({ user: { uid: 'local-preview-user' } });
+const onAuthStateChanged = (auth, cb) => { setTimeout(() => cb({ uid: 'local-preview-user' }), 0); return () => {}; };
+const getFirestore = () => ({ local: true });
+const collection = (db, ...parts) => ({ key: parts.join('/') });
+const serverTimestamp = () => ({ __serverTimestamp: true });
+function __readCollection(key) {
+  try { return JSON.parse(localStorage.getItem('quiz_' + key) || '[]'); } catch { return []; }
+}
+function __writeCollection(key, rows) {
+  localStorage.setItem('quiz_' + key, JSON.stringify(rows));
+  (__fakeListeners[key] || []).forEach(cb => __emitSnapshot(key, cb));
+}
+function __emitSnapshot(key, cb) {
+  const rows = __readCollection(key);
+  cb({ docs: rows.map(row => ({ id: row.id, data: () => ({ ...row, timestamp: row.timestampMillis ? __makeTs(row.timestampMillis) : null }) })) });
+}
+const addDoc = async (ref, data) => {
+  const rows = __readCollection(ref.key);
+  const item = { ...data, id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2), timestampMillis: Date.now() };
+  delete item.timestamp;
+  rows.push(item);
+  __writeCollection(ref.key, rows);
+  return { id: item.id };
+};
+const onSnapshot = (ref, cb, errCb) => {
+  __fakeListeners[ref.key] = __fakeListeners[ref.key] || [];
+  __fakeListeners[ref.key].push(cb);
+  __emitSnapshot(ref.key, cb);
+  return () => { __fakeListeners[ref.key] = (__fakeListeners[ref.key] || []).filter(x => x !== cb); };
+};
+const doc = (db, ...parts) => ({ key: parts.slice(0, -1).join('/'), id: parts[parts.length - 1] });
+const deleteDoc = async (ref) => {
+  const rows = __readCollection(ref.key).filter(row => row.id !== ref.id);
+  __writeCollection(ref.key, rows);
+};
+
+// --- DATA: CÂU HỎI MỨC ĐỘ 1 (CƠ BẢN) - BÀI 10 ---
+const quizData = [
+  // Trắc nghiệm
+  {
+    id: 1, type: 'tracnghiem',
+    text: "Kính lúp là dụng cụ dùng để:",
+    options: [
+      "A. quan sát các vật rất xa.",
+      "B. quan sát các vật nhỏ.",
+      "C. đo khối lượng của vật.",
+      "D. phân tích ánh sáng trắng."
+    ],
+    correctOption: 1,
+    answerText: "B. quan sát các vật nhỏ.",
+    explanation: "Kính lúp là dụng cụ quang học dùng để quan sát các vật nhỏ."
+  },
+  {
+    id: 2, type: 'tracnghiem',
+    text: "Bộ phận chính của kính lúp là:",
+    options: [
+      "A. một gương phẳng.",
+      "B. một lăng kính.",
+      "C. một thấu kính hội tụ.",
+      "D. một thấu kính phân kì."
+    ],
+    correctOption: 2,
+    answerText: "C. một thấu kính hội tụ.",
+    explanation: "Bộ phận chính của kính lúp là một thấu kính hội tụ có tiêu cự vài xentimét."
+  },
+  {
+    id: 3, type: 'tracnghiem',
+    text: "Khi quan sát vật nhỏ qua kính lúp, ảnh quan sát được là:",
+    options: [
+      "A. ảnh thật, ngược chiều vật.",
+      "B. ảnh thật, cùng chiều vật.",
+      "C. ảnh ảo, cùng chiều và lớn hơn vật.",
+      "D. ảnh ảo, ngược chiều và nhỏ hơn vật."
+    ],
+    correctOption: 2,
+    answerText: "C. ảnh ảo, cùng chiều và lớn hơn vật.",
+    explanation: "Kính lúp tạo ảnh ảo, cùng chiều và lớn hơn vật khi vật đặt trong khoảng tiêu cự."
+  },
+  {
+    id: 4, type: 'tracnghiem',
+    text: "Trên kính lúp thường ghi các số như $2\\text{X}, 3\\text{X}, 5\\text{X}, 10\\text{X}$. Các số đó cho biết:",
+    options: [
+      "A. khối lượng của kính.",
+      "B. số bội giác của kính.",
+      "C. chiều dài tay cầm.",
+      "D. đường kính khung kính."
+    ],
+    correctOption: 1,
+    answerText: "B. số bội giác của kính.",
+    explanation: "Các số như $2\\text{X}, 3\\text{X}, 5\\text{X}, 10\\text{X}$ cho biết số bội giác của kính lúp."
+  },
+  {
+    id: 5, type: 'tracnghiem',
+    text: "Khi dùng kính lúp, vật cần quan sát phải đặt:",
+    options: [
+      "A. trong khoảng tiêu cự của kính.",
+      "B. ngoài khoảng tiêu cự của kính.",
+      "C. tại khoảng cách bằng hai lần tiêu cự.",
+      "D. rất xa kính."
+    ],
+    correctOption: 0,
+    answerText: "A. trong khoảng tiêu cự của kính.",
+    explanation: "Muốn quan sát ảnh ảo lớn hơn vật qua kính lúp, vật phải đặt cách thấu kính một khoảng nhỏ hơn tiêu cự."
+  },
+  // Đúng/Sai
+  {
+    id: 6, type: 'dungsai',
+    text: "Kính lúp là một thấu kính phân kì.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Bộ phận chính của kính lúp là một thấu kính hội tụ, không phải thấu kính phân kì."
+  },
+  {
+    id: 7, type: 'dungsai',
+    text: "Số bội giác của kính lúp được kí hiệu là $G$. Số bội giác càng lớn thì ảnh quan sát được càng nhỏ.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Số bội giác cho biết độ phóng đại của kính. Do đó, số bội giác càng lớn thì ảnh quan sát được qua kính lúp càng lớn."
+  },
+  {
+    id: 8, type: 'dungsai',
+    text: "Khi dịch chuyển kính lúp, vật có thể nằm ngoài khoảng tiêu cự mà vẫn quan sát được ảnh lớn hơn vật.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Khi dùng kính lúp, vật bắt buộc phải nằm trong khoảng tiêu cự thì mới tạo ra ảnh ảo lớn hơn vật để mắt nhìn thấy."
+  },
+  {
+    id: 9, type: 'dungsai',
+    text: "Ảnh thu được qua kính lúp là ảnh ảo, cùng chiều và lớn hơn vật khi vật đặt trong khoảng tiêu cự.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Đây là tính chất tạo ảnh đặc trưng của thấu kính hội tụ khi được sử dụng làm kính lúp."
+  },
+  {
+    id: 10, type: 'dungsai',
+    text: "Công thức tính số bội giác của kính lúp là $G = \\frac{25}{f}$, với tiêu cự $f$ được tính bằng đơn vị $\\text{cm}$.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Số bội giác $G$ tỉ lệ nghịch với tiêu cự $f$. Theo công thức $G = \\frac{25}{f}$, nếu $f$ càng nhỏ thì $G$ càng lớn."
+  },
+  // Tự luận
+  {
+    id: 11, type: 'tuluan', 
+    text: "Kính lúp là gì?",
+    answerText: "Kính lúp là dụng cụ quang học dùng để quan sát các vật nhỏ. Bộ phận chính của kính lúp là một thấu kính hội tụ có tiêu cự vài xentimét.",
+    explanation: "Nêu đúng công dụng (quan sát vật nhỏ) và bộ phận chính (thấu kính hội tụ tiêu cự ngắn)."
+  },
+  {
+    id: 12, type: 'tuluan', 
+    text: "Nêu cấu tạo cơ bản của kính lúp.",
+    answerText: "Kính lúp gồm bộ phận chính là thấu kính hội tụ, được bảo vệ bởi một khung kính và thường có thêm tay cầm.",
+    explanation: "Mô tả được các thành phần vật lý của một chiếc kính lúp thông thường."
+  },
+  {
+    id: 13, type: 'tuluan', 
+    text: "Khi quan sát vật nhỏ qua kính lúp, ảnh thu được có đặc điểm gì?",
+    answerText: "Khi vật đặt trong khoảng tiêu cự của kính lúp, mắt đặt sau kính sẽ quan sát được ảnh ảo, cùng chiều và lớn hơn vật.",
+    explanation: "Dựa vào nguyên tắc hoạt động tạo ảnh của thấu kính hội tụ khi $d < f$."
+  },
+  {
+    id: 14, type: 'tuluan', 
+    text: "Nêu các bước sử dụng kính lúp để quan sát một vật nhỏ.",
+    answerText: "Bước 1: Đặt kính lúp gần sát vật cần quan sát, mắt nhìn vào mặt kính.\nBước 2: Từ từ dịch chuyển kính ra xa vật nhưng vẫn giữ vật nằm trong khoảng tiêu cự, cho đến khi nhìn rõ các chi tiết của vật.",
+    explanation: "Trình bày theo đúng thao tác thực hành sử dụng kính lúp."
+  },
+  {
+    id: 15, type: 'tuluan', 
+    text: "Số bội giác của kính lúp cho biết điều gì?",
+    answerText: "Số bội giác của kính lúp cho biết độ phóng đại của kính. Kính lúp có số bội giác càng lớn thì ảnh quan sát được qua kính càng lớn (phóng to càng nhiều lần).",
+    explanation: "Dựa vào ý nghĩa của số bội giác $G$ được ghi trên khung kính lúp."
+  }
+];
+
+// --- FIREBASE INITIALIZATION ---
+let app, auth, db, appId;
+try {
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  appId = typeof __app_id !== 'undefined' ? __app_id : 'khtn9-light-quiz-b10-lvl1';
+} catch (error) {
+  console.warn("Firebase initialization skipped (expected in non-preview env)");
+}
+
+// Tên collection lưu trữ 
+const DB_COLLECTION_NAME = 'khtn9_quiz_results_b10_lvl1_basic';
+
+// --- COMPONENTS ---
+
+const ImagePlaceholder = ({ note }) => (
+  <div className="w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-6 my-4 flex flex-col items-center justify-center text-slate-500">
+    <ImageIcon size={32} className="mb-2 opacity-50" />
+    <span className="text-sm font-medium text-center">Khu vực chèn hình ảnh minh họa</span>
+    <span className="text-xs text-center mt-1 italic">[{note}]</span>
+    {/* TODO: Add <img> tag here when images are available */}
+  </div>
+);
+
+const MathText = ({ text }) => {
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    const renderMath = () => {
+      if (window.renderMathInElement && containerRef.current) {
+        window.renderMathInElement(containerRef.current, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    };
+
+    renderMath();
+    window.addEventListener('katex-ready', renderMath);
+    return () => window.removeEventListener('katex-ready', renderMath);
+  }, [text]);
+
+  return <span ref={containerRef}>{text || ''}</span>;
+};
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [appState, setAppState] = useState('intro'); // intro, form, quiz, result, teacherAuth, teacherBoard
+  const [studentInfo, setStudentInfo] = useState({ name: '', class: '', school: '' });
+  const [answers, setAnswers] = useState({});
+  const [elapsedTime, setElapsedTime] = useState(0); // Bộ đếm thời gian làm bài (tính bằng giây)
+  const [score, setScore] = useState(0);
+  const [teacherPwd, setTeacherPwd] = useState('');
+  const [teacherError, setTeacherError] = useState('');
+  const [resultsData, setResultsData] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Custom Modal Delete State
+  const [deleteTarget, setDeleteTarget] = useState(null); // 'all' hoặc recordId
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load KaTeX for Physics/Math formatting
+  useEffect(() => {
+    if (!document.getElementById('katex-css')) {
+      const link = document.createElement('link');
+      link.id = 'katex-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+      document.head.appendChild(link);
+
+      const script = document.createElement('script');
+      script.id = 'katex-js';
+      script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+      script.onload = () => {
+        const autoRender = document.createElement('script');
+        autoRender.id = 'katex-auto-render';
+        autoRender.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
+        autoRender.onload = () => window.dispatchEvent(new Event('katex-ready'));
+        document.head.appendChild(autoRender);
+      };
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Firebase Auth
+  useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth error", e);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let timer;
+    if (appState === 'quiz') {
+      timer = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [appState]);
+
+  // Handle Form Input
+  const handleStartQuiz = (e) => {
+    e.preventDefault();
+    if (studentInfo.name && studentInfo.class && studentInfo.school) {
+      setAnswers({});
+      setElapsedTime(0);
+      setAppState('quiz');
+    }
+  };
+
+  const handleAnswerSelect = (qId, value) => {
+    setAnswers(prev => ({ ...prev, [qId]: value }));
+  };
+
+  const calculateScore = () => {
+    let points = 0;
+    quizData.forEach(q => {
+      if (q.type === 'tracnghiem' || q.type === 'dungsai') {
+        if (answers[q.id] === q.correctOption) points += 1;
+      }
+    });
+    return points;
+  };
+
+  const isAllAnswered = useMemo(() => {
+    return Object.keys(answers).length === quizData.length;
+  }, [answers]);
+
+  const handleSubmitQuiz = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const finalScore = calculateScore();
+    setScore(finalScore);
+    
+    // Save to Firebase
+    if (user && db) {
+      try {
+        const timeSpent = elapsedTime;
+        const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+        await addDoc(resultsRef, {
+          studentName: studentInfo.name,
+          studentClass: studentInfo.class,
+          studentSchool: studentInfo.school,
+          score: finalScore,
+          timeSpent: timeSpent,
+          answers: answers,
+          timestamp: serverTimestamp(),
+          userId: user.uid
+        });
+      } catch (err) {
+        console.error("Error saving result", err);
+      }
+    }
+    
+    setAppState('result');
+    setIsSubmitting(false);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Teacher Auth
+  const handleTeacherLogin = (e) => {
+    e.preventDefault();
+    if (teacherPwd === 'admin') {
+      setAppState('teacherBoard');
+      setTeacherError('');
+    } else {
+      setTeacherError('Mật khẩu không chính xác!');
+    }
+  };
+
+  // Fetch Teacher Data
+  useEffect(() => {
+    if (appState === 'teacherBoard' && user && db) {
+      const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+      const unsubscribe = onSnapshot(resultsRef, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort in memory (Rule 2)
+        data.sort((a, b) => {
+           const timeA = a.timestamp?.toMillis() || 0;
+           const timeB = b.timestamp?.toMillis() || 0;
+           return timeB - timeA;
+        });
+        setResultsData(data);
+      }, (err) => console.error(err));
+      return () => unsubscribe();
+    }
+  }, [appState, user]);
+
+  // Execute Delete
+  const confirmDelete = async () => {
+    if (!user || !db || !deleteTarget) return;
+    setIsDeleting(true);
+    
+    try {
+      if (deleteTarget === 'all') {
+        const promises = resultsData.map(res => 
+          deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, res.id))
+        );
+        await Promise.all(promises);
+      } else {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, deleteTarget));
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa dữ liệu:", error);
+    }
+    
+    setIsDeleting(false);
+    setDeleteTarget(null);
+  };
+
+
+  // --- RENDERERS ---
+
+  if (appState === 'intro') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-indigo-600 p-8 text-center text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-20">
+              <BookOpen size={100} />
+            </div>
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-amber-300" />
+            <h1 className="text-3xl font-extrabold mb-2 relative z-10">Đấu Trường Tri Thức</h1>
+            <p className="text-indigo-100 text-lg relative z-10">Chủ đề: Ánh Sáng - KHTN 9</p>
+            <p className="bg-white/20 inline-block px-3 py-1 rounded-full text-indigo-50 text-sm mt-2 font-medium relative z-10 border border-white/30">
+              Bài 10: Kính lúp (Mức 1 - Cơ bản)
+            </p>
+          </div>
+          
+          <div className="p-8 text-center space-y-6">
+            <p className="text-slate-600">
+              Chào mừng bạn đến với hệ thống ôn tập tương tác. Hãy vận dụng trí nhớ và kiến thức vật lý nền tảng để vượt qua 15 thử thách cơ bản!
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <FileText className="text-indigo-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">15 Câu hỏi</p>
+                  <p className="text-xs text-slate-500">Trắc nghiệm & Tự luận</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <Clock className="text-amber-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">Tự do</p>
+                  <p className="text-xs text-slate-500">Không giới hạn thời gian</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col space-y-3">
+              <button 
+                onClick={() => setAppState('form')}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all flex justify-center items-center"
+              >
+                Vào Thi Ngay <ArrowRight className="ml-2" />
+              </button>
+              <button 
+                onClick={() => setAppState('teacherAuth')}
+                className="w-full bg-white hover:bg-slate-50 text-slate-600 font-medium py-3 px-8 rounded-xl border border-slate-200 transition-all flex justify-center items-center"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" /> Chế độ Giáo viên
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'form') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          <div className="text-center mb-6">
+            <User className="w-12 h-12 text-indigo-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-slate-800">Thông tin thí sinh</h2>
+            <p className="text-slate-500 text-sm">Vui lòng điền đầy đủ thông tin để bắt đầu</p>
+          </div>
+          
+          <form onSubmit={handleStartQuiz} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Họ và tên</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.name}
+                onChange={e => setStudentInfo({...studentInfo, name: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: Nguyễn Văn A"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Lớp</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.class}
+                onChange={e => setStudentInfo({...studentInfo, class: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: 9A1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Trường</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.school}
+                onChange={e => setStudentInfo({...studentInfo, school: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: THCS Lê Quý Đôn"
+              />
+            </div>
+            <div className="pt-4 flex gap-3">
+              <button 
+                type="button"
+                onClick={() => setAppState('intro')}
+                className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại
+              </button>
+              <button 
+                type="submit"
+                className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center"
+              >
+                <Play className="w-4 h-4 mr-2 fill-current" /> Bắt đầu
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'quiz') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-24">
+        {/* Header / Timer */}
+        <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
+          <div>
+            <p className="font-bold text-indigo-800 hidden sm:block">Đấu Trường Tri Thức</p>
+            <p className="text-xs text-slate-500 font-medium">{studentInfo.name} - {studentInfo.class}</p>
+          </div>
+          <div className="flex items-center px-4 py-1.5 rounded-full font-mono text-lg font-bold bg-indigo-100 text-indigo-700">
+            <Clock className="w-5 h-5 mr-2" />
+            {formatTime(elapsedTime)}
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto p-4 mt-6 space-y-6">
+          {quizData.map((q, index) => (
+            <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-100 px-4 sm:px-6 py-3 flex justify-between items-center">
+                <span className="font-bold text-slate-700">Câu {index + 1}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-200 text-slate-600 uppercase">
+                  {q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}
+                </span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <p className="text-base sm:text-lg text-slate-800 font-medium mb-4 leading-relaxed"><MathText text={q.text} /></p>
+                
+                {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+
+                {/* Tự Luận */}
+                {q.type === 'tuluan' && (
+                  <textarea 
+                    value={answers[q.id] || ''}
+                    onChange={(e) => handleAnswerSelect(q.id, e.target.value)}
+                    placeholder="Nhập câu trả lời của bạn vào đây..."
+                    className="w-full h-24 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-slate-700"
+                  ></textarea>
+                )}
+
+                {/* Trắc Nghiệm */}
+                {q.type === 'tracnghiem' && (
+                  <div className="space-y-3">
+                    {q.options.map((opt, i) => (
+                      <label 
+                        key={i} 
+                        className={`flex items-center p-3 sm:p-4 rounded-xl border cursor-pointer transition-all ${answers[q.id] === i ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'border-slate-200 hover:bg-slate-50'}`}
+                      >
+                        <input 
+                          type="radio" 
+                          name={`q-${q.id}`} 
+                          className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                          checked={answers[q.id] === i}
+                          onChange={() => handleAnswerSelect(q.id, i)}
+                        />
+                        <span className="ml-3 text-slate-700"><MathText text={opt} /></span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Đúng / Sai */}
+                {q.type === 'dungsai' && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Đúng')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Đúng' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Đúng
+                    </button>
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Sai')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Sai' ? 'bg-red-50 border-red-500 text-red-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Sai
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-3 sm:p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="text-sm sm:text-base text-slate-600 font-medium">
+              Đã trả lời: <span className="text-indigo-600 font-bold">{Object.keys(answers).length}</span> / {quizData.length}
+            </div>
+            <button
+              onClick={handleSubmitQuiz}
+              disabled={!isAllAnswered || isSubmitting}
+              className={`px-5 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold flex items-center transition-all ${isAllAnswered && !isSubmitting ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+            >
+              {isSubmitting ? 'Đang nộp...' : <span className="flex items-center">Nộp Bài <span className="hidden sm:inline">&nbsp;Ngay</span></span>} <CheckSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'result') {
+    const timeSpentSeconds = elapsedTime;
+    const isGoodScore = score >= 8;
+
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-12">
+        <div className="bg-indigo-600 text-white pt-12 pb-24 px-4 text-center rounded-b-[3rem] shadow-xl">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Kết quả của bạn</h1>
+          <p className="text-indigo-200">{studentInfo.name} - Lớp {studentInfo.class}</p>
+        </div>
+
+        <div className="max-w-3xl mx-auto -mt-16 px-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-around mb-8 border border-slate-100">
+            <div className="text-center mb-6 sm:mb-0">
+              <p className="text-slate-500 font-medium mb-1">Điểm trắc nghiệm</p>
+              <div className="flex items-end justify-center">
+                <span className={`text-6xl font-extrabold ${isGoodScore ? 'text-green-500' : 'text-amber-500'}`}>{score}</span>
+                <span className="text-2xl text-slate-400 mb-1 ml-1">/10</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">*Tự luận chờ GV chấm</p>
+            </div>
+            <div className="h-16 w-px bg-slate-200 hidden sm:block"></div>
+            <div className="text-center">
+              <p className="text-slate-500 font-medium mb-1">Thời gian</p>
+              <span className="text-3xl font-bold text-slate-700">{formatTime(timeSpentSeconds)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center mb-8">
+             <button 
+                onClick={() => {
+                  setAnswers({});
+                  setAppState('intro');
+                }}
+                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 px-6 rounded-xl flex items-center transition-all"
+             >
+                <RefreshCcw className="w-5 h-5 mr-2" /> Thi lại (Cải thiện điểm)
+             </button>
+          </div>
+
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+            <BookOpen className="text-indigo-500 mr-2" /> ĐÁP ÁN CHI TIẾT
+          </h3>
+
+          <div className="space-y-6">
+            {quizData.map((q, index) => {
+              const isObj = q.type === 'tracnghiem' || q.type === 'dungsai';
+              const isCorrect = isObj && answers[q.id] === q.correctOption;
+              const studentAnswerStr = q.type === 'tracnghiem' && answers[q.id] !== undefined ? q.options[answers[q.id]] : answers[q.id];
+
+              return (
+                <div key={q.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isObj ? (isCorrect ? 'border-green-300' : 'border-red-300') : 'border-blue-300'}`}>
+                  <div className={`px-4 py-2 font-medium flex items-center justify-between text-sm ${isObj ? (isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800') : 'bg-blue-50 text-blue-800'}`}>
+                    <span>Câu {index + 1}: <span className="hidden sm:inline">{q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}</span></span>
+                    {isObj ? (
+                      isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <span className="bg-blue-200 text-blue-800 px-2 py-0.5 rounded text-xs">Chờ chấm</span>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 sm:p-5">
+                    <p className="text-sm sm:text-base text-slate-800 font-medium mb-3"><MathText text={q.text} /></p>
+                    {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+                    
+                    <div className="mb-4 bg-slate-50 p-3 rounded border border-slate-100">
+                      <p className="text-sm text-slate-500 mb-1">Bài làm của bạn:</p>
+                      <p className={`font-medium ${isObj ? (isCorrect ? 'text-green-600' : 'text-red-600') : 'text-slate-700'}`}>
+                        {studentAnswerStr ? <MathText text={studentAnswerStr} /> : <span className="italic text-slate-400">Không có câu trả lời</span>}
+                      </p>
+                    </div>
+
+                    <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100">
+                      <p className="text-sm text-indigo-800 font-bold mb-1">Đáp án gợi ý / Chính xác:</p>
+                      <p className="font-medium text-slate-800 mb-3"><MathText text={q.answerText} /></p>
+                      
+                      <div className="flex items-start">
+                         <AlertCircle className="w-4 h-4 text-amber-500 mr-2 mt-0.5 shrink-0" />
+                         <p className="text-sm text-slate-600"><span className="font-semibold text-slate-700">Giải thích:</span> <MathText text={q.explanation} /></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER MODE AUTH
+  if (appState === 'teacherAuth') {
+    return (
+      <div className="min-h-screen bg-slate-800 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 text-slate-300">
+          <div className="text-center mb-6">
+            <ShieldCheck className="w-12 h-12 text-teal-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-white">Chế Độ Giáo Viên</h2>
+            <p className="text-slate-400 text-sm">Vui lòng nhập mật khẩu quản trị viên</p>
+          </div>
+          
+          <form onSubmit={handleTeacherLogin} className="space-y-4">
+            <div>
+              <input 
+                type="password" 
+                value={teacherPwd}
+                onChange={e => setTeacherPwd(e.target.value)}
+                className="w-full bg-slate-800 px-4 py-3 rounded-lg border border-slate-600 text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                placeholder="Mật khẩu (admin)"
+              />
+              {teacherError && <p className="text-red-400 text-sm mt-2 text-center">{teacherError}</p>}
+            </div>
+            
+            <div className="pt-2 flex flex-col space-y-3">
+              <button 
+                type="submit"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all"
+              >
+                Đăng nhập hệ thống
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setAppState('intro'); setTeacherPwd(''); setTeacherError(''); }}
+                className="w-full bg-transparent hover:bg-slate-800 text-slate-400 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại giao diện học sinh
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER DASHBOARD
+  if (appState === 'teacherBoard') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans relative">
+        
+        {/* Custom Confirm Modal (Phục vụ việc Xóa không dùng window.confirm) */}
+        {deleteTarget && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-opacity">
+             <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center text-red-600 mb-4">
+                   <AlertTriangle className="w-8 h-8 mr-3" />
+                   <h3 className="text-xl font-bold text-slate-800">Xác nhận xóa</h3>
+                </div>
+                <p className="text-slate-600 mb-8 leading-relaxed">
+                  {deleteTarget === 'all' 
+                    ? 'Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu bài làm của học sinh không? Hành động này không thể hoàn tác.' 
+                    : 'Bạn có chắc chắn muốn xóa bài làm của học sinh này khỏi hệ thống không?'}
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button 
+                    onClick={() => setDeleteTarget(null)} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button 
+                    onClick={confirmDelete} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md shadow-red-500/20 transition-all flex items-center"
+                  >
+                    {isDeleting ? 'Đang xóa...' : 'Xóa dữ liệu'}
+                  </button>
+                </div>
+             </div>
+          </div>
+        )}
+
+        <div className="bg-slate-900 text-white p-4 sm:p-6 shadow-md flex justify-between items-center sticky top-0 z-40">
+          <div className="flex items-center">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400 mr-3" />
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold">Bảng Điều Khiển Giáo Viên</h1>
+              <p className="text-[10px] sm:text-xs text-slate-400">Hệ thống lượng giá KHTN 9 - Bài 10 (Mức 1)</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setAppState('intro')}
+            className="flex items-center px-3 sm:px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+          >
+            <LogOut className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Thoát</span>
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-lg font-bold text-slate-800">Thống kê bài làm học sinh (Cơ bản)</h2>
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <span className="bg-teal-100 text-teal-800 px-3 py-1.5 rounded-lg text-sm font-bold border border-teal-200">
+                  Tổng cộng: {resultsData.length} lượt
+                </span>
+                {resultsData.length > 0 && (
+                  <button 
+                    onClick={() => setDeleteTarget('all')}
+                    className="flex items-center px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-semibold transition-colors border border-red-200"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Xóa tất cả
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600 text-sm border-b border-slate-200">
+                    <th className="p-4 font-semibold">Thời gian nộp</th>
+                    <th className="p-4 font-semibold">Họ Tên</th>
+                    <th className="p-4 font-semibold">Lớp</th>
+                    <th className="p-4 font-semibold">Trường</th>
+                    <th className="p-4 font-semibold text-center">Điểm</th>
+                    <th className="p-4 font-semibold text-center">Thời gian làm</th>
+                    <th className="p-4 font-semibold text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {resultsData.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-12 text-center text-slate-500">
+                        <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                        Chưa có dữ liệu bài làm nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    resultsData.map((res, i) => (
+                      <tr key={res.id || i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                        <td className="p-4 text-slate-500">
+                          {res.timestamp ? new Date(res.timestamp.toMillis()).toLocaleString('vi-VN') : 'Đang tải...'}
+                        </td>
+                        <td className="p-4 font-bold text-slate-800">{res.studentName}</td>
+                        <td className="p-4 text-slate-700">{res.studentClass}</td>
+                        <td className="p-4 text-slate-600">{res.studentSchool}</td>
+                        <td className="p-4 text-center">
+                           <span className={`font-bold px-2.5 py-1 rounded-md ${res.score >= 8 ? 'bg-green-100 text-green-700' : res.score >= 5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                             {res.score}/10
+                           </span>
+                        </td>
+                        <td className="p-4 text-center font-mono text-slate-500">
+                          {formatTime(res.timeSpent)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <button 
+                            onClick={() => setDeleteTarget(res.id)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa bài làm này"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+  </script>
+</body>
+</html>

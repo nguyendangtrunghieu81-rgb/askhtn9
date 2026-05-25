@@ -1,0 +1,39 @@
+Tất cả file trong gói này được đặt CÙNG THƯ MỤC với index.html.
+
+Ảnh dùng trong web tổng:
+- thay-hieu.png
+- bia-sach-khtn9.png
+
+Các file bài tập đã được đóng gói và index.html đã trỏ đúng tên:
+- Bài 5 - mức 1.html
+- Bài 5 - mức 2.html
+- Bài 5 - mức 3.html
+- Bài 6 - mức 1.html
+- Bài 6 - mức 2.html
+- bài 6 - mức 3.html
+- Bài 7 - mức 1.html
+- Bài 7 - Mức 2.html
+- Bài 7 - mức 3.html
+- Bài 8 - mức 1.html
+- Bài 8 - mức 2.html
+- Bài 8 - mức 3.html
+- Bài 10 - mức 1.html
+- Bài 10 - mức 2.html
+- Bài 10 - mức 3.html
+- Tổng ôn chủ đề - mức 1.html
+- Tổng ôn chủ đề - mức 2.html
+- Tổng ôn chủ đề - mức 3.html
+
+Các file lý thuyết và thí nghiệm cần đặt cùng thư mục khi thầy bổ sung:
+- Lý thuyết bài 5 - khúc xạ ánh sáng.png
+- Lý thuyết bài 6 - Phản xạ toàn phần.png
+- Lý thuyết bài 7 - Lăng kính.png
+- Lý thuyết bài 8 - Thấu kính.png
+- Lý thuyết bài 9 - Thực hành đo tiêu cự của thấu kính hội tụ.png
+- Lý thuyết bài 10 - Kính lúp, bài tập thấu kính.png
+- Lý thuyết chủ đề Ánh sáng.png
+- TNA - KHTN 9 - BÀI 5 - KHÚC XẠ ÁNH SÁNG.html
+- TNA - KHTN 9 - BÀI 6 - PHẢN XẠ TOÀN PHẦN.html
+- TNA - KHTN 9 - BÀI 7 - LĂNG KÍNH.html
+- TNA - KHTN 9 - BÀI 8 - THẤU KÍNH.html
+- TNA - KHTN 9 - BÀI 9 - THỰC HÀNH.html

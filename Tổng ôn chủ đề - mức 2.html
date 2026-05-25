@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đấu Trường Tri Thức - Tổng ôn Ánh sáng Mức 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+import React, { useState, useEffect, useMemo } from 'https://esm.sh/react@18.2.0';
+import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { 
+  Trophy, BookOpen, Clock, User, ShieldCheck, Play, 
+  CheckCircle2, XCircle, AlertCircle, Image as ImageIcon,
+  ArrowRight, LogOut, FileText, CheckSquare, RefreshCcw,
+  Trash2, AlertTriangle
+} from 'https://esm.sh/lucide-react@0.468.0?deps=react@18.2.0';
+
+// --- DATA: CÂU HỎI TỔNG ÔN MỨC ĐỘ 2 (THÔNG HIỂU) - BÀI 5,6,7,8,10 ---
+const quizData = [
+  {
+    id: 1, type: 'tracnghiem',
+    text: "Khi ánh sáng truyền từ nước ra không khí theo phương xiên góc thì:",
+    options: [
+      "A. góc khúc xạ lớn hơn góc tới.",
+      "B. góc khúc xạ nhỏ hơn góc tới.",
+      "C. góc khúc xạ luôn bằng 0.",
+      "D. không có tia khúc xạ."
+    ],
+    correctOption: 0,
+    answerText: "A. góc khúc xạ lớn hơn góc tới.",
+    explanation: "Khi ánh sáng truyền từ môi trường chiết quang hơn (nước) sang môi trường chiết quang kém hơn (không khí), tia khúc xạ lệch xa pháp tuyến nên góc khúc xạ lớn hơn góc tới. (Bài 5)"
+  },
+  {
+    id: 2, type: 'dungsai',
+    text: "Hiện tượng mặt đường lấp loáng như có vũng nước vào ngày nắng nóng có liên quan trực tiếp đến hiện tượng phản xạ toàn phần.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Hiện tượng này (ảo ảnh) được giải thích bằng sự khúc xạ và phản xạ toàn phần do sự khác biệt chiết suất giữa các lớp không khí bị nung nóng. (Bài 6)"
+  },
+  {
+    id: 3, type: 'tuluan', 
+    text: "Phân biệt sự khác nhau cơ bản giữa ảnh thật và ảnh ảo tạo bởi các quang cụ.",
+    answerText: "- <b>Ảnh thật:</b> là ảnh có thể hứng được trên màn chắn (nơi giao nhau thực sự của các tia ló).<br/>- <b>Ảnh ảo:</b> là ảnh không thể hứng được trên màn chắn (chỉ là nơi giao nhau của đường kéo dài các tia ló, chỉ quan sát được bằng mắt).",
+    explanation: "Dựa vào đặc điểm vật lý trực quan nhất để nhận biết loại ảnh trong thực nghiệm. (Bài 8)"
+  },
+  {
+    id: 4, type: 'tracnghiem',
+    text: "Kính lúp có số bội giác G = 5. Tiêu cự của kính là:",
+    options: [
+      "A. 2,5 cm.",
+      "B. 5 cm.",
+      "C. 10 cm.",
+      "D. 25 cm."
+    ],
+    correctOption: 1,
+    answerText: "B. 5 cm.",
+    explanation: "Áp dụng công thức G = 25/f, suy ra f = 25/G = 25/5 = 5 cm. (Bài 10)"
+  },
+  {
+    id: 5, type: 'tracnghiem',
+    text: "Khi chiếu chùm sáng trắng qua lăng kính, hiện tượng ánh sáng bị phân tách thành một dải màu từ đỏ đến tím được gọi là:",
+    options: [
+      "A. phản xạ toàn phần.",
+      "B. giao thoa ánh sáng.",
+      "C. tán sắc ánh sáng.",
+      "D. khúc xạ đơn thuần."
+    ],
+    correctOption: 2,
+    answerText: "C. tán sắc ánh sáng.",
+    explanation: "Đây là định nghĩa chuẩn của hiện tượng tán sắc ánh sáng khi đi qua lăng kính. (Bài 7)"
+  },
+  {
+    id: 6, type: 'tuluan', 
+    text: "Giải thích vì sao khi nhìn viên sỏi dưới đáy chậu nước, ta thường thấy ảnh của viên sỏi không đúng vị trí thật.",
+    answerText: "Ánh sáng từ viên sỏi truyền từ nước ra không khí bị khúc xạ tại mặt phân cách. Mắt ta nhận tia khúc xạ (kéo dài ngược lại) và nhìn thấy ảnh ảo của viên sỏi ở vị trí khác (thường dâng cao hơn) vị trí thật.",
+    explanation: "Vận dụng hiện tượng khúc xạ để giải thích ảo giác về vị trí. (Bài 5)"
+  },
+  {
+    id: 7, type: 'dungsai',
+    text: "Ảnh của một vật sáng tạo bởi thấu kính phân kì luôn luôn nằm ngoài khoảng tiêu cự.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Ảnh của vật qua thấu kính phân kì luôn luôn là ảnh ảo và nó BẮT BUỘC nằm TRONG khoảng tiêu cự của thấu kính. (Bài 8)"
+  },
+  {
+    id: 8, type: 'tracnghiem',
+    text: "Phản xạ toàn phần khác phản xạ thông thường ở điểm nào?",
+    options: [
+      "A. Phản xạ toàn phần không tuân theo định luật phản xạ ánh sáng.",
+      "B. Phản xạ toàn phần cần điều kiện n<sub>1</sub> > n<sub>2</sub> và i ≥ i<sub>th</sub>.",
+      "C. Phản xạ thông thường cần góc tới lớn hơn góc tới hạn.",
+      "D. Phản xạ thông thường không có tia phản xạ."
+    ],
+    correctOption: 1,
+    answerText: "B. Phản xạ toàn phần cần điều kiện n<sub>1</sub> > n<sub>2</sub> và i ≥ i<sub>th</sub>.",
+    explanation: "Phản xạ thông thường có thể xảy ra ở mọi góc tới, trong khi phản xạ toàn phần chỉ xảy ra khi có đủ hai điều kiện về chiết suất và góc tới. (Bài 6)"
+  },
+  {
+    id: 9, type: 'dungsai',
+    text: "Kính lúp có số bội giác (G) càng lớn thì tiêu cự (f) của kính đó càng dài.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Theo công thức G = 25/f, số bội giác G tỉ lệ nghịch với tiêu cự f. Kính có G càng lớn thì f phải càng ngắn. (Bài 10)"
+  },
+  {
+    id: 10, type: 'tuluan', 
+    text: "Một quả táo màu đỏ được chiếu bằng ánh sáng lục. Theo nguyên lý về màu sắc, quả táo đó có thể trông như thế nào? Giải thích.",
+    answerText: "Quả táo có thể trông gần như <b>màu đen</b>.<br/>Bởi vì vật màu đỏ có đặc tính phản xạ mạnh ánh sáng đỏ và hấp thụ hầu hết các ánh sáng màu khác. Do đó nó sẽ hấp thụ ánh sáng lục chiếu vào, không có ánh sáng phản xạ tới mắt ta.",
+    explanation: "Đánh giá khả năng hiểu về sự hấp thụ và phản xạ lọc màu của vật thể. (Bài 7)"
+  },
+  {
+    id: 11, type: 'tracnghiem',
+    text: "Vật đặt trong khoảng tiêu cự của thấu kính hội tụ cho ảnh:",
+    options: [
+      "A. thật, ngược chiều, nhỏ hơn vật.",
+      "B. thật, cùng chiều, lớn hơn vật.",
+      "C. ảo, cùng chiều, lớn hơn vật.",
+      "D. ảo, ngược chiều, nhỏ hơn vật."
+    ],
+    correctOption: 2,
+    answerText: "C. ảo, cùng chiều, lớn hơn vật.",
+    explanation: "Tính chất này được ứng dụng trực tiếp để chế tạo kính lúp. (Bài 8)"
+  },
+  {
+    id: 12, type: 'tuluan', 
+    text: "So sánh điểm giống và khác nhau giữa phản xạ toàn phần và phản xạ thông thường.",
+    answerText: "<b>Giống:</b> Đều là ánh sáng bị hắt lại môi trường cũ và tuân theo định luật phản xạ.<br/><b>Khác:</b> Phản xạ toàn phần cần điều kiện n<sub>1</sub> > n<sub>2</sub> và i ≥ i<sub>th</sub> (toàn bộ tia sáng bị hắt lại). Phản xạ thông thường xảy ra với góc tới bất kì và luôn kèm theo tia khúc xạ yếu đi sang môi trường 2.",
+    explanation: "Phân biệt rõ bản chất vật lý của hai hiện tượng. (Bài 6)"
+  },
+  {
+    id: 13, type: 'dungsai',
+    text: "Chiết suất tuyệt đối của môi trường càng lớn thì vận tốc ánh sáng truyền trong môi trường đó càng nhỏ.",
+    correctOption: "Đúng",
+    answerText: "Đúng",
+    explanation: "Theo công thức n = c/v, chiết suất (n) và vận tốc ánh sáng trong môi trường (v) tỉ lệ nghịch. Môi trường càng chiết quang thì ánh sáng đi càng chậm. (Bài 5)"
+  },
+  {
+    id: 14, type: 'tracnghiem',
+    text: "Khi quan sát vật nhỏ qua kính lúp, cần đặt vật trong khoảng tiêu cự vì:",
+    options: [
+      "A. để kính tạo ảnh thật hứng được trên màn.",
+      "B. để kính tạo ảnh ảo lớn hơn vật.",
+      "C. để vật biến mất khỏi mắt.",
+      "D. để ảnh ngược chiều vật."
+    ],
+    correctOption: 1,
+    answerText: "B. để kính tạo ảnh ảo lớn hơn vật.",
+    explanation: "Chỉ khi d < f thì thấu kính hội tụ (kính lúp) mới cho ảnh ảo cùng chiều và phóng to. (Bài 10)"
+  },
+  {
+    id: 15, type: 'dungsai',
+    text: "Ánh sáng đơn sắc (ví dụ: tia laser màu đỏ) cũng sẽ bị tán sắc thành nhiều màu khi truyền qua lăng kính.",
+    correctOption: "Sai",
+    answerText: "Sai",
+    explanation: "Ánh sáng đơn sắc chỉ có một màu nhất định nên nó chỉ bị lệch phương (khúc xạ) về phía đáy lăng kính chứ không thể bị tán sắc thêm. (Bài 7)"
+  },
+  {
+    id: 16, type: 'tracnghiem',
+    text: "Tia tới đi qua quang tâm của thấu kính (cả hội tụ và phân kì) thì tia ló sẽ:",
+    options: [
+      "A. đi qua tiêu điểm.",
+      "B. song song với trục chính.",
+      "C. truyền thẳng theo phương của tia tới.",
+      "D. có đường kéo dài đi qua tiêu điểm."
+    ],
+    correctOption: 2,
+    answerText: "C. truyền thẳng theo phương của tia tới.",
+    explanation: "Đây là một trong những tia sáng đặc biệt cơ bản nhất khi đi qua quang tâm O. (Bài 8)"
+  },
+  {
+    id: 17, type: 'tuluan', 
+    text: "Vì sao kính lúp phải là thấu kính hội tụ có tiêu cự ngắn?",
+    answerText: "Kính lúp cần tạo ảnh ảo, cùng chiều và lớn hơn vật. Thấu kính hội tụ tiêu cự ngắn khi vật đặt trong khoảng tiêu cự sẽ tạo được ảnh ảo lớn hơn vật một cách rõ nét, tăng góc trông ảnh để mắt dễ dàng quan sát các chi tiết rất nhỏ.",
+    explanation: "Liên hệ giữa nguyên tắc tạo ảnh và công dụng thực tiễn của kính lúp. (Bài 10)"
+  },
+  {
+    id: 18, type: 'tracnghiem',
+    text: "Khi góc tới của tia sáng truyền qua mặt phân cách 2 môi trường tăng dần thì góc khúc xạ sẽ:",
+    options: [
+      "A. luôn giảm.",
+      "B. cũng tăng.",
+      "C. không thay đổi.",
+      "D. luôn bằng góc tới."
+    ],
+    correctOption: 1,
+    answerText: "B. cũng tăng.",
+    explanation: "Khi góc tới tăng thì góc khúc xạ cũng tăng (hàm đồng biến), nhưng không tỉ lệ thuận đơn giản mà tuân theo định luật khúc xạ. (Bài 5)"
+  },
+  {
+    id: 19, type: 'tracnghiem',
+    text: "Trong sợi quang, lớp vỏ phải có chiết suất nhỏ hơn lõi (n<sub>vỏ</sub> < n<sub>lõi</sub>) để:",
+    options: [
+      "A. ánh sáng bị hấp thụ hoàn toàn.",
+      "B. ánh sáng phản xạ toàn phần nhiều lần trong lõi.",
+      "C. ánh sáng truyền ra ngoài vỏ dễ dàng hơn.",
+      "D. ánh sáng đổi màu liên tục."
+    ],
+    correctOption: 1,
+    answerText: "B. ánh sáng phản xạ toàn phần nhiều lần trong lõi.",
+    explanation: "Lõi có chiết suất lớn hơn vỏ là điều kiện tiên quyết (n1 > n2) giúp ánh sáng gặp mặt phân cách sẽ bị phản xạ toàn phần, không thất thoát ra ngoài. (Bài 6)"
+  },
+  {
+    id: 20, type: 'tuluan', 
+    text: "Trình bày cách dựng ảnh của một vật sáng AB phẳng, nhỏ đặt vuông góc với trục chính của thấu kính hội tụ.",
+    needsImage: true,
+    imageNote: "Hình vẽ cách dựng ảnh A'B' của vật AB qua thấu kính bằng 2 tia đặc biệt xuất phát từ B.",
+    answerText: "Từ điểm B, ta vẽ 2 trong 3 tia sáng đặc biệt:<br/>1. Tia đi qua quang tâm O truyền thẳng.<br/>2. Tia song song với trục chính cho tia ló đi qua tiêu điểm F'.<br/>Giao điểm của hai tia ló (hoặc đường kéo dài của chúng) là ảnh B'. Từ B' hạ đường vuông góc cắt trục chính tại A', ta được ảnh A'B'.",
+    explanation: "Đánh giá kỹ năng dựng hình quang học cơ bản. (Bài 8)"
+  }
+];
+
+// --- FIREBASE INITIALIZATION ---
+let app, auth, db, appId;
+try {
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  appId = typeof __app_id !== 'undefined' ? __app_id : 'khtn9-light-quiz-tongon-lvl2';
+} catch (error) {
+  console.warn("Firebase initialization skipped (expected in non-preview env)");
+}
+
+// Tên collection lưu trữ (TỔNG ÔN - Mức 2)
+const DB_COLLECTION_NAME = 'khtn9_quiz_results_tongon_lvl2';
+
+// --- COMPONENTS ---
+
+const ImagePlaceholder = ({ note }) => (
+  <div className="w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-6 my-4 flex flex-col items-center justify-center text-slate-500">
+    <ImageIcon size={32} className="mb-2 opacity-50" />
+    <span className="text-sm font-medium text-center">Khu vực chèn hình ảnh minh họa</span>
+    <span className="text-xs text-center mt-1 italic">[{note}]</span>
+    {/* TODO: Add <img> tag here when images are available */}
+  </div>
+);
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [appState, setAppState] = useState('intro'); // intro, form, quiz, result, teacherAuth, teacherBoard
+  const [studentInfo, setStudentInfo] = useState({ name: '', class: '', school: '' });
+  const [answers, setAnswers] = useState({});
+  const [elapsedTime, setElapsedTime] = useState(0); // Bộ đếm thời gian làm bài (tính bằng giây)
+  const [score, setScore] = useState(0);
+  const [teacherPwd, setTeacherPwd] = useState('');
+  const [teacherError, setTeacherError] = useState('');
+  const [resultsData, setResultsData] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Custom Modal Delete State
+  const [deleteTarget, setDeleteTarget] = useState(null); // 'all' hoặc recordId
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Firebase Auth
+  useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth error", e);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let timer;
+    if (appState === 'quiz') {
+      timer = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [appState]);
+
+  // Handle Form Input
+  const handleStartQuiz = (e) => {
+    e.preventDefault();
+    if (studentInfo.name && studentInfo.class && studentInfo.school) {
+      setAnswers({});
+      setElapsedTime(0);
+      setAppState('quiz');
+    }
+  };
+
+  const handleAnswerSelect = (qId, value) => {
+    setAnswers(prev => ({ ...prev, [qId]: value }));
+  };
+
+  const calculateScore = () => {
+    let points = 0;
+    quizData.forEach(q => {
+      if (q.type === 'tracnghiem' || q.type === 'dungsai') {
+        if (answers[q.id] === q.correctOption) points += 1;
+      }
+    });
+    return points;
+  };
+
+  const isAllAnswered = useMemo(() => {
+    return Object.keys(answers).length === quizData.length;
+  }, [answers]);
+
+  const handleSubmitQuiz = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const finalScore = calculateScore();
+    setScore(finalScore);
+    
+    // Save to Firebase
+    if (user && db) {
+      try {
+        const timeSpent = elapsedTime;
+        const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+        await addDoc(resultsRef, {
+          studentName: studentInfo.name,
+          studentClass: studentInfo.class,
+          studentSchool: studentInfo.school,
+          score: finalScore,
+          timeSpent: timeSpent,
+          answers: answers,
+          timestamp: serverTimestamp(),
+          userId: user.uid
+        });
+      } catch (err) {
+        console.error("Error saving result", err);
+      }
+    }
+    
+    setAppState('result');
+    setIsSubmitting(false);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Teacher Auth
+  const handleTeacherLogin = (e) => {
+    e.preventDefault();
+    if (teacherPwd === 'admin') {
+      setAppState('teacherBoard');
+      setTeacherError('');
+    } else {
+      setTeacherError('Mật khẩu không chính xác!');
+    }
+  };
+
+  // Fetch Teacher Data
+  useEffect(() => {
+    if (appState === 'teacherBoard' && user && db) {
+      const resultsRef = collection(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME);
+      const unsubscribe = onSnapshot(resultsRef, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort in memory (Rule 2)
+        data.sort((a, b) => {
+           const timeA = a.timestamp?.toMillis() || 0;
+           const timeB = b.timestamp?.toMillis() || 0;
+           return timeB - timeA;
+        });
+        setResultsData(data);
+      }, (err) => console.error(err));
+      return () => unsubscribe();
+    }
+  }, [appState, user]);
+
+  // Execute Delete
+  const confirmDelete = async () => {
+    if (!user || !db || !deleteTarget) return;
+    setIsDeleting(true);
+    
+    try {
+      if (deleteTarget === 'all') {
+        const promises = resultsData.map(res => 
+          deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, res.id))
+        );
+        await Promise.all(promises);
+      } else {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', DB_COLLECTION_NAME, deleteTarget));
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa dữ liệu:", error);
+    }
+    
+    setIsDeleting(false);
+    setDeleteTarget(null);
+  };
+
+
+  // --- RENDERERS ---
+
+  if (appState === 'intro') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-indigo-600 p-8 text-center text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-20">
+              <BookOpen size={100} />
+            </div>
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-amber-300" />
+            <h1 className="text-3xl font-extrabold mb-2 relative z-10">Đấu Trường Tri Thức</h1>
+            <p className="text-indigo-100 text-lg relative z-10">Tổng Ôn Chủ đề: Ánh Sáng - KHTN 9</p>
+            <p className="bg-white/20 inline-block px-3 py-1 rounded-full text-indigo-50 text-sm mt-2 font-medium relative z-10 border border-white/30">
+              Bài 5, 6, 7, 8, 10 (Mức 2 - Thông hiểu)
+            </p>
+          </div>
+          
+          <div className="p-8 text-center space-y-6">
+            <p className="text-slate-600">
+              Chào mừng bạn đến với bài TỔNG ÔN cuối chương. 20 thử thách đã được xáo trộn từ các hiện tượng khúc xạ, tán sắc đến hệ thấu kính. Hãy tập trung cao độ nhé!
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <FileText className="text-indigo-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">20 Câu hỏi</p>
+                  <p className="text-xs text-slate-500">Được trộn ngẫu nhiên</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center">
+                <Clock className="text-amber-500 mr-3" />
+                <div>
+                  <p className="font-bold text-slate-800">Tự do</p>
+                  <p className="text-xs text-slate-500">Không giới hạn thời gian</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col space-y-3">
+              <button 
+                onClick={() => setAppState('form')}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all flex justify-center items-center"
+              >
+                Vào Thi Ngay <ArrowRight className="ml-2" />
+              </button>
+              <button 
+                onClick={() => setAppState('teacherAuth')}
+                className="w-full bg-white hover:bg-slate-50 text-slate-600 font-medium py-3 px-8 rounded-xl border border-slate-200 transition-all flex justify-center items-center"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" /> Chế độ Giáo viên
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'form') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          <div className="text-center mb-6">
+            <User className="w-12 h-12 text-indigo-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-slate-800">Thông tin thí sinh</h2>
+            <p className="text-slate-500 text-sm">Vui lòng điền đầy đủ thông tin để bắt đầu</p>
+          </div>
+          
+          <form onSubmit={handleStartQuiz} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Họ và tên</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.name}
+                onChange={e => setStudentInfo({...studentInfo, name: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: Nguyễn Văn A"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Lớp</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.class}
+                onChange={e => setStudentInfo({...studentInfo, class: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: 9A1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Trường</label>
+              <input 
+                required
+                type="text" 
+                value={studentInfo.school}
+                onChange={e => setStudentInfo({...studentInfo, school: e.target.value})}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                placeholder="VD: THCS Lê Quý Đôn"
+              />
+            </div>
+            <div className="pt-4 flex gap-3">
+              <button 
+                type="button"
+                onClick={() => setAppState('intro')}
+                className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại
+              </button>
+              <button 
+                type="submit"
+                className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center"
+              >
+                <Play className="w-4 h-4 mr-2 fill-current" /> Bắt đầu
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'quiz') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-24">
+        {/* Header / Timer */}
+        <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex justify-between items-center">
+          <div>
+            <p className="font-bold text-indigo-800 hidden sm:block">Đấu Trường Tri Thức</p>
+            <p className="text-xs text-slate-500 font-medium">{studentInfo.name} - {studentInfo.class}</p>
+          </div>
+          <div className="flex items-center px-4 py-1.5 rounded-full font-mono text-lg font-bold bg-indigo-100 text-indigo-700">
+            <Clock className="w-5 h-5 mr-2" />
+            {formatTime(elapsedTime)}
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto p-4 mt-6 space-y-6">
+          {quizData.map((q, index) => (
+            <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-100 px-4 sm:px-6 py-3 flex justify-between items-center">
+                <span className="font-bold text-slate-700">Câu {index + 1}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-200 text-slate-600 uppercase">
+                  {q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}
+                </span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <p className="text-base sm:text-lg text-slate-800 font-medium mb-4 leading-relaxed" dangerouslySetInnerHTML={{ __html: q.text }}></p>
+                
+                {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+
+                {/* Tự Luận */}
+                {q.type === 'tuluan' && (
+                  <textarea 
+                    value={answers[q.id] || ''}
+                    onChange={(e) => handleAnswerSelect(q.id, e.target.value)}
+                    placeholder="Nhập câu trả lời của bạn vào đây..."
+                    className="w-full h-24 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-slate-700"
+                  ></textarea>
+                )}
+
+                {/* Trắc Nghiệm */}
+                {q.type === 'tracnghiem' && (
+                  <div className="space-y-3">
+                    {q.options.map((opt, i) => (
+                      <label 
+                        key={i} 
+                        className={`flex items-center p-3 sm:p-4 rounded-xl border cursor-pointer transition-all ${answers[q.id] === i ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'border-slate-200 hover:bg-slate-50'}`}
+                      >
+                        <input 
+                          type="radio" 
+                          name={`q-${q.id}`} 
+                          className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                          checked={answers[q.id] === i}
+                          onChange={() => handleAnswerSelect(q.id, i)}
+                        />
+                        <span className="ml-3 text-slate-700" dangerouslySetInnerHTML={{ __html: opt }}></span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Đúng / Sai */}
+                {q.type === 'dungsai' && (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Đúng')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Đúng' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Đúng
+                    </button>
+                    <button
+                      onClick={() => handleAnswerSelect(q.id, 'Sai')}
+                      className={`flex-1 py-4 rounded-xl border font-bold transition-all ${answers[q.id] === 'Sai' ? 'bg-red-50 border-red-500 text-red-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Sai
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-3 sm:p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="text-sm sm:text-base text-slate-600 font-medium">
+              Đã trả lời: <span className="text-indigo-600 font-bold">{Object.keys(answers).length}</span> / {quizData.length}
+            </div>
+            <button
+              onClick={handleSubmitQuiz}
+              disabled={!isAllAnswered || isSubmitting}
+              className={`px-5 sm:px-8 py-2.5 sm:py-3 rounded-xl font-bold flex items-center transition-all ${isAllAnswered && !isSubmitting ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/30' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+            >
+              {isSubmitting ? 'Đang nộp...' : <span className="flex items-center">Nộp Bài <span className="hidden sm:inline">&nbsp;Ngay</span></span>} <CheckSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (appState === 'result') {
+    const timeSpentSeconds = elapsedTime;
+    const totalObjective = quizData.filter(q => q.type === 'tracnghiem' || q.type === 'dungsai').length;
+    const isGoodScore = (score / totalObjective) >= 0.8;
+
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans pb-12">
+        <div className="bg-indigo-600 text-white pt-12 pb-24 px-4 text-center rounded-b-[3rem] shadow-xl">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Kết quả của bạn</h1>
+          <p className="text-indigo-200">{studentInfo.name} - Lớp {studentInfo.class}</p>
+        </div>
+
+        <div className="max-w-3xl mx-auto -mt-16 px-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-around mb-8 border border-slate-100">
+            <div className="text-center mb-6 sm:mb-0">
+              <p className="text-slate-500 font-medium mb-1">Điểm khách quan</p>
+              <div className="flex items-end justify-center">
+                <span className={`text-6xl font-extrabold ${isGoodScore ? 'text-green-500' : 'text-amber-500'}`}>{score}</span>
+                <span className="text-2xl text-slate-400 mb-1 ml-1">/{totalObjective}</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">*Tự luận chờ GV chấm</p>
+            </div>
+            <div className="h-16 w-px bg-slate-200 hidden sm:block"></div>
+            <div className="text-center">
+              <p className="text-slate-500 font-medium mb-1">Thời gian</p>
+              <span className="text-3xl font-bold text-slate-700">{formatTime(timeSpentSeconds)}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center mb-8">
+             <button 
+                onClick={() => {
+                  setAnswers({});
+                  setAppState('intro');
+                }}
+                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 px-6 rounded-xl flex items-center transition-all"
+             >
+                <RefreshCcw className="w-5 h-5 mr-2" /> Thi lại (Cải thiện điểm)
+             </button>
+          </div>
+
+          <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+            <BookOpen className="text-indigo-500 mr-2" /> ĐÁP ÁN CHI TIẾT
+          </h3>
+
+          <div className="space-y-6">
+            {quizData.map((q, index) => {
+              const isObj = q.type === 'tracnghiem' || q.type === 'dungsai';
+              const isCorrect = isObj && answers[q.id] === q.correctOption;
+              const studentAnswerStr = q.type === 'tracnghiem' && answers[q.id] !== undefined ? q.options[answers[q.id]] : answers[q.id];
+
+              return (
+                <div key={q.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isObj ? (isCorrect ? 'border-green-300' : 'border-red-300') : 'border-blue-300'}`}>
+                  <div className={`px-4 py-2 font-medium flex items-center justify-between text-sm ${isObj ? (isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800') : 'bg-blue-50 text-blue-800'}`}>
+                    <span>Câu {index + 1}: <span className="hidden sm:inline">{q.type === 'tuluan' ? 'Tự Luận' : q.type === 'tracnghiem' ? 'Trắc Nghiệm' : 'Đúng/Sai'}</span></span>
+                    {isObj ? (
+                      isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <span className="bg-blue-200 text-blue-800 px-2 py-0.5 rounded text-xs">Chờ chấm</span>
+                    )}
+                  </div>
+                  
+                  <div className="p-4 sm:p-5">
+                    <p className="text-sm sm:text-base text-slate-800 font-medium mb-3" dangerouslySetInnerHTML={{ __html: q.text }}></p>
+                    {q.needsImage && <ImagePlaceholder note={q.imageNote} />}
+                    
+                    <div className="mb-4 bg-slate-50 p-3 rounded border border-slate-100">
+                      <p className="text-sm text-slate-500 mb-1">Bài làm của bạn:</p>
+                      <p 
+                        className={`font-medium ${isObj ? (isCorrect ? 'text-green-600' : 'text-red-600') : 'text-slate-700'}`}
+                        dangerouslySetInnerHTML={{ __html: studentAnswerStr || '<span class="italic text-slate-400">Không có câu trả lời</span>' }}
+                      ></p>
+                    </div>
+
+                    <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100">
+                      <p className="text-sm text-indigo-800 font-bold mb-1">Đáp án gợi ý / Chính xác:</p>
+                      <p className="font-medium text-slate-800 mb-3" dangerouslySetInnerHTML={{ __html: q.answerText }}></p>
+                      
+                      <div className="flex items-start">
+                         <AlertCircle className="w-4 h-4 text-amber-500 mr-2 mt-0.5 shrink-0" />
+                         <p className="text-sm text-slate-600"><span className="font-semibold text-slate-700">Giải thích:</span> <span dangerouslySetInnerHTML={{ __html: q.explanation }}></span></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER MODE AUTH
+  if (appState === 'teacherAuth') {
+    return (
+      <div className="min-h-screen bg-slate-800 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 text-slate-300">
+          <div className="text-center mb-6">
+            <ShieldCheck className="w-12 h-12 text-teal-500 mx-auto mb-2" />
+            <h2 className="text-2xl font-bold text-white">Chế Độ Giáo Viên</h2>
+            <p className="text-slate-400 text-sm">Vui lòng nhập mật khẩu quản trị viên</p>
+          </div>
+          
+          <form onSubmit={handleTeacherLogin} className="space-y-4">
+            <div>
+              <input 
+                type="password" 
+                value={teacherPwd}
+                onChange={e => setTeacherPwd(e.target.value)}
+                className="w-full bg-slate-800 px-4 py-3 rounded-lg border border-slate-600 text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+                placeholder="Mật khẩu (admin)"
+              />
+              {teacherError && <p className="text-red-400 text-sm mt-2 text-center">{teacherError}</p>}
+            </div>
+            
+            <div className="pt-2 flex flex-col space-y-3">
+              <button 
+                type="submit"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all"
+              >
+                Đăng nhập hệ thống
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setAppState('intro'); setTeacherPwd(''); setTeacherError(''); }}
+                className="w-full bg-transparent hover:bg-slate-800 text-slate-400 font-medium py-3 rounded-lg transition-all"
+              >
+                Quay lại giao diện học sinh
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // TEACHER DASHBOARD
+  if (appState === 'teacherBoard') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans relative">
+        
+        {/* Custom Confirm Modal (Phục vụ việc Xóa không dùng window.confirm) */}
+        {deleteTarget && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-opacity">
+             <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center text-red-600 mb-4">
+                   <AlertTriangle className="w-8 h-8 mr-3" />
+                   <h3 className="text-xl font-bold text-slate-800">Xác nhận xóa</h3>
+                </div>
+                <p className="text-slate-600 mb-8 leading-relaxed">
+                  {deleteTarget === 'all' 
+                    ? 'Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu bài làm của học sinh không? Hành động này không thể hoàn tác.' 
+                    : 'Bạn có chắc chắn muốn xóa bài làm của học sinh này khỏi hệ thống không?'}
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button 
+                    onClick={() => setDeleteTarget(null)} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button 
+                    onClick={confirmDelete} 
+                    disabled={isDeleting}
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-md shadow-red-500/20 transition-all flex items-center"
+                  >
+                    {isDeleting ? 'Đang xóa...' : 'Xóa dữ liệu'}
+                  </button>
+                </div>
+             </div>
+          </div>
+        )}
+
+        <div className="bg-slate-900 text-white p-4 sm:p-6 shadow-md flex justify-between items-center sticky top-0 z-40">
+          <div className="flex items-center">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400 mr-3" />
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold">Bảng Điều Khiển Giáo Viên</h1>
+              <p className="text-[10px] sm:text-xs text-slate-400">Hệ thống lượng giá KHTN 9 - Tổng ôn (Mức 2)</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setAppState('intro')}
+            className="flex items-center px-3 sm:px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+          >
+            <LogOut className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Thoát</span>
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-lg font-bold text-slate-800">Thống kê bài làm học sinh (Tổng ôn)</h2>
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <span className="bg-teal-100 text-teal-800 px-3 py-1.5 rounded-lg text-sm font-bold border border-teal-200">
+                  Tổng cộng: {resultsData.length} lượt
+                </span>
+                {resultsData.length > 0 && (
+                  <button 
+                    onClick={() => setDeleteTarget('all')}
+                    className="flex items-center px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-semibold transition-colors border border-red-200"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Xóa tất cả
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600 text-sm border-b border-slate-200">
+                    <th className="p-4 font-semibold">Thời gian nộp</th>
+                    <th className="p-4 font-semibold">Họ Tên</th>
+                    <th className="p-4 font-semibold">Lớp</th>
+                    <th className="p-4 font-semibold">Trường</th>
+                    <th className="p-4 font-semibold text-center">Điểm (Khách quan)</th>
+                    <th className="p-4 font-semibold text-center">Thời gian làm</th>
+                    <th className="p-4 font-semibold text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {resultsData.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-12 text-center text-slate-500">
+                        <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                        Chưa có dữ liệu bài làm nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    resultsData.map((res, i) => (
+                      <tr key={res.id || i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                        <td className="p-4 text-slate-500">
+                          {res.timestamp ? new Date(res.timestamp.toMillis()).toLocaleString('vi-VN') : 'Đang tải...'}
+                        </td>
+                        <td className="p-4 font-bold text-slate-800">{res.studentName}</td>
+                        <td className="p-4 text-slate-700">{res.studentClass}</td>
+                        <td className="p-4 text-slate-600">{res.studentSchool}</td>
+                        <td className="p-4 text-center">
+                           <span className={`font-bold px-2.5 py-1 rounded-md ${res.score >= 10 ? 'bg-green-100 text-green-700' : res.score >= 6 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                             {res.score}/12
+                           </span>
+                        </td>
+                        <td className="p-4 text-center font-mono text-slate-500">
+                          {formatTime(res.timeSpent)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <button 
+                            onClick={() => setDeleteTarget(res.id)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa bài làm này"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
