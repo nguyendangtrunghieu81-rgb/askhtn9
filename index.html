@@ -663,16 +663,6 @@
       padding: 18px;
     }
 
-
-
-    .teacher-placeholder[hidden],
-    .teacher-placeholder:empty {
-      display: none !important;
-      border: 0 !important;
-      background: transparent !important;
-      padding: 0 !important;
-    }
-
     .teacher-placeholder .big { font-size: 4rem; margin-bottom: 10px; }
     .teacher-copy h3 { margin: 0 0 12px; font-size: 2rem; letter-spacing: -0.6px; }
     .teacher-copy p { margin: 0; line-height: 1.75; color: #475569; font-size: 1.08rem; }
@@ -943,67 +933,6 @@
       .photo-frame { max-width: 420px; }
     }
 
-
-
-    /* Tối ưu bổ sung để bảng đánh giá, ảnh thầy và card không vỡ bố cục trên mobile */
-    @media (max-width: 760px) {
-      .teacher-grid {
-        grid-template-columns: 1fr !important;
-      }
-      .photo-frame {
-        width: 100%;
-        max-width: 100% !important;
-        min-height: 0;
-        aspect-ratio: 4 / 5;
-      }
-      .teacher-photo {
-        min-height: 0;
-        height: 100%;
-      }
-      .teacher-copy h3 {
-        font-size: clamp(1.45rem, 7vw, 2rem);
-      }
-      .assessment-actions {
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-      .assessment-actions button,
-      .assessment-login button {
-        width: 100%;
-      }
-      .assessment-table-wrap {
-        max-width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .assessment-table {
-        min-width: 760px;
-      }
-    }
-
-    @media (max-width: 460px) {
-      .panel-inner,
-      .hello-card,
-      .resource-card,
-      .exercise-card {
-        padding-left: 16px !important;
-        padding-right: 16px !important;
-      }
-      .badge,
-      .pill,
-      .small-label {
-        font-size: 0.84rem;
-      }
-      .assessment-stats {
-        grid-template-columns: 1fr !important;
-      }
-      .chat-window {
-        width: calc(100vw - 20px);
-        right: 10px;
-      }
-    }
-
-
     @media (max-width: 680px) {
       .container { width: min(100% - 22px, 1180px); }
       .hero { border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; }
@@ -1078,7 +1007,7 @@
           <div>
             <span class="badge">🧭 Hồ sơ học tập</span>
             <h2 class="section-title">Thông tin người học</h2>
-            <p class="section-desc">Nhập một lần tại web tổng, thông tin sẽ được lưu vào localStorage và truyền qua link bài tập/thí nghiệm bằng query string. Riêng giáo viên cần nhập mật khẩu <strong>admin</strong>.</p>
+            
           </div>
         </div>
 
@@ -1321,7 +1250,7 @@
       Không đặt OpenAI API key trong index.html.
       Muốn dùng ChatGPT API thật, hãy tạo backend/proxy và trỏ CHATBOT_API_URL tới endpoint đó.
     */
-    const CHATBOT_API_URL = "apichatbot";
+    const CHATBOT_API_URL = "/api/chatbot-anh-sang";
 
     const theoryItems = [
       { id: "bai5", label: "Bài 5", title: "Khúc xạ ánh sáng", desc: "Tia sáng đi qua mặt phân cách và đổi hướng ra sao?", icon: "💧", file: "Lý thuyết bài 5 - khúc xạ ánh sáng.png" },
@@ -1714,7 +1643,7 @@
         ${data.students.length ? `<div class="assessment-table-wrap"><table class="assessment-table"><thead><tr><th>Học sinh</th><th>Lớp</th><th>Tiến độ</th><th>Kết quả</th><th>Điểm tốt nhất</th><th>Thời gian học</th><th>Hoạt động gần nhất</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="assessment-empty">Chưa có dữ liệu học sinh. Khi học sinh mở bài/tương tác/nộp bài trong cùng bộ web, dữ liệu sẽ xuất hiện tại đây.</div>`}
         <div class="assessment-actions">
           <button type="button" id="assessmentRefreshBtn">Làm mới</button>
-          <button type="button" class="secondary" id="assessmentExportBtn">Xuất dữ liệu đánh giá</button>
+          <button type="button" class="secondary" id="assessmentExportBtn">Xuất JSON</button>
           <button type="button" class="secondary" id="assessmentLockBtn">Khóa bảng</button>
         </div>
       </div>`;
@@ -1743,84 +1672,17 @@
       return false;
     }
 
-    function buildAssessmentRowsForExport() {
-      const data = getAssessmentSummary();
-      return data.students.map(function(student, index) {
-        return {
-          stt: index + 1,
-          name: student.name || "Chưa có tên",
-          className: student.className || "",
-          school: student.school || "",
-          progress: student.completedItems + "/" + student.totalLearningItems + " (" + student.progress + "%)",
-          attempts: student.attempts || 0,
-          avgScore: student.avgScore == null ? "" : student.avgScore.toFixed(1),
-          bestScore: student.bestScore == null ? "" : student.bestScore,
-          timeSpent: formatDuration(student.timeSpent),
-          latestTitle: student.latestTitle || "",
-          latestTime: formatDateTime(student.latest)
-        };
-      });
-    }
-
-    function excelCell(value) {
-      return escapeHtml(value == null ? "" : String(value));
-    }
-
     function exportAssessmentData() {
-      const rows = buildAssessmentRowsForExport();
-      const generatedAt = new Date().toLocaleString("vi-VN");
-      const header = ["STT", "Họ và tên", "Lớp", "Trường", "Tiến độ học", "Lượt làm bài", "Điểm trung bình", "Điểm cao nhất", "Thời gian học", "Hoạt động gần nhất", "Thời điểm gần nhất"];
-      const bodyRows = rows.length ? rows.map(function(row) {
-        return "<tr>" + [
-          row.stt,
-          row.name,
-          row.className,
-          row.school,
-          row.progress,
-          row.attempts,
-          row.avgScore,
-          row.bestScore,
-          row.timeSpent,
-          row.latestTitle,
-          row.latestTime
-        ].map(function(cell) { return "<td>" + excelCell(cell) + "</td>"; }).join("") + "</tr>";
-      }).join("") : "<tr><td colspan='11'>Chưa có dữ liệu đánh giá học sinh.</td></tr>";
-
-      const excelHtml = `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8"><style>
-  body{font-family:Arial,sans-serif;}
-  table{border-collapse:collapse;width:100%;}
-  th,td{border:1px solid #94a3b8;padding:8px;vertical-align:top;}
-  th{background:#0ea5e9;color:#fff;font-weight:700;}
-  .title{font-size:20px;font-weight:700;color:#0f172a;margin-bottom:6px;}
-  .meta{color:#475569;margin-bottom:14px;}
-</style></head>
-<body>
-  <div class="title">Dữ liệu đánh giá học sinh - Chủ đề Ánh sáng KHTN 9</div>
-  <div class="meta">Xuất lúc: ${excelCell(generatedAt)}</div>
-  <table>
-    <thead><tr>${header.map(function(item){ return "<th>" + excelCell(item) + "</th>"; }).join("")}</tr></thead>
-    <tbody>${bodyRows}</tbody>
-  </table>
-</body></html>`;
-
-      const blob = new Blob(["\ufeff" + excelHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const data = getAssessmentSummary();
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), summary: data }, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "du-lieu-danh-gia-hoc-sinh-khtn9-anh-sang.xls";
+      a.download = "danh-gia-hoc-sinh-khtn9-anh-sang.json";
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showToast("Đã xuất dữ liệu đánh giá dạng Excel.", "success");
-    }
-
-    function clearAssessmentData() {
-      localStorage.removeItem(LEARNING_RECORDS_KEY);
-      renderGreeting(getStoredProfile());
-      showToast("Đã làm mới và xóa dữ liệu đánh giá học sinh trên thiết bị này.", "success");
     }
 
     function logLearningEvent(eventType, payload) {
@@ -1891,7 +1753,7 @@
           const lvClass = "lv" + level.level;
           const disabled = level.disabled ? "disabled" : "";
           const arrow = level.disabled ? "⏳" : "→";
-          return `<button class="level-btn" type="button" ${disabled} data-file="${escapeHtml(level.file)}" data-kind="exercise" aria-label="${escapeHtml(group.lesson)} ${escapeHtml(level.label)}"><span class="level-dot ${lvClass}">${level.level}</span><span class="level-meta"><strong>Mức ${level.level}: ${escapeHtml(level.label)}</strong><span>${escapeHtml(level.tag)}</span><span class="file-hint">${escapeHtml(level.file)}</span></span><span class="level-arrow">${arrow}</span></button>`;
+          return `<button class="level-btn" type="button" ${disabled} data-file="${escapeHtml(level.file)}" data-kind="exercise" aria-label="${escapeHtml(group.lesson)} ${escapeHtml(level.label)}"><span class="level-dot ${lvClass}">${level.level}</span><span class="level-meta"><strong>Mức ${level.level}: ${escapeHtml(level.label)}</strong><span>${escapeHtml(level.tag)}</span></span><span class="level-arrow">${arrow}</span></button>`;
         }).join("");
         return `<article class="exercise-card"><div class="exercise-head"><div><h3>${escapeHtml(group.icon)} ${escapeHtml(group.lesson)}</h3><p>${escapeHtml(group.topic)}</p></div><span class="small-label">3 mức độ</span></div><div class="level-list">${levelButtons}</div></article>`;
       }).join("");
@@ -2073,7 +1935,7 @@
           const input = document.getElementById("assessmentPassword");
           unlockAssessmentFromPassword(input ? input.value : "");
         }
-        if (refreshBtn) clearAssessmentData();
+        if (refreshBtn) renderGreeting(getStoredProfile());
         if (lockBtn) { localStorage.removeItem(ASSESSMENT_AUTH_KEY); renderGreeting(getStoredProfile()); showToast("Đã khóa bảng đánh giá.", "success"); }
         if (exportBtn) exportAssessmentData();
       });
