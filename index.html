@@ -638,7 +638,7 @@
       overflow: hidden;
       background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(129,140,248,0.22)), white;
       border: 1px solid rgba(148,163,184,0.2);
-      box-shadow: inset 0 0 40px rgba(255,255,255,0.7);
+      box-shadow: 0 18px 42px rgba(15,23,42,0.12);
     }
 
     .teacher-photo {
@@ -908,6 +908,93 @@
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
     /* NÚT TRỞ VỀ TRANG CHỦ - CSS MẪU ĐỂ COPY SANG CÁC WEB CON */
+
+
+    .student-profile-field { display: flex; }
+    .teacher-filter-field { display: none; }
+    .teacher-filter-note {
+      grid-column: 1 / -1;
+      display: none;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #075985;
+      font-weight: 850;
+      line-height: 1.5;
+    }
+
+    .teacher-placeholder,
+    .teacher-placeholder[hidden] {
+      display: none !important;
+    }
+
+    .assessment-filter-info {
+      margin: 10px 0 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: #e0f2fe;
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+
+    .assessment-delete-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #ffe4e6;
+      color: #be123c;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .assessment-actions button.excel {
+      background: linear-gradient(135deg, #bbf7d0, #86efac);
+      color: #064e3b;
+    }
+
+    #theory {
+      background: linear-gradient(135deg, rgba(239,246,255,0.68), rgba(224,242,254,0.28));
+      border-top: 1px solid rgba(125,211,252,0.28);
+      border-bottom: 1px solid rgba(125,211,252,0.18);
+    }
+
+    #lab {
+      background: linear-gradient(135deg, rgba(236,253,245,0.72), rgba(240,253,250,0.34));
+      border-top: 1px solid rgba(52,211,153,0.24);
+      border-bottom: 1px solid rgba(52,211,153,0.14);
+    }
+
+    #exercise {
+      background: linear-gradient(135deg, rgba(255,247,237,0.78), rgba(254,243,199,0.30));
+      border-top: 1px solid rgba(251,146,60,0.24);
+      border-bottom: 1px solid rgba(251,146,60,0.14);
+    }
+
+    #theory .resource-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,246,255,0.90));
+    }
+
+    #lab .resource-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(236,253,245,0.90));
+    }
+
+    #exercise .exercise-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(255,251,235,0.92));
+    }
+
+    @media (max-width: 680px) {
+      .teacher-filter-note { font-size: 0.92rem; }
+      .assessment-table { min-width: 860px; }
+      .assessment-actions button { width: 100%; }
+      .photo-frame { max-width: 100%; min-height: 0; }
+      .teacher-photo { min-height: 0; height: auto; }
+      .section-title { font-size: clamp(1.45rem, 7vw, 2rem); }
+      .book-caption { left: 18px; right: 18px; bottom: 18px; }
+    }
+
     .home-button {
       position: fixed;
       top: 16px;
@@ -1007,7 +1094,6 @@
           <div>
             <span class="badge">🧭 Hồ sơ học tập</span>
             <h2 class="section-title">Thông tin người học</h2>
-            
           </div>
         </div>
 
@@ -1023,22 +1109,22 @@
                   </select>
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-profile-field">
                   <label for="profileName">Họ và tên</label>
                   <input id="profileName" name="name" type="text" placeholder="Ví dụ: Nguyễn Ánh Dương" />
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-profile-field">
                   <label for="profileClass">Lớp</label>
                   <input id="profileClass" name="class" type="text" placeholder="Ví dụ: 9A1" />
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-profile-field">
                   <label for="profileSchool">Trường</label>
                   <input id="profileSchool" name="school" type="text" placeholder="Ví dụ: THCS ..." />
                 </div>
 
-                <div class="form-field">
+                <div class="form-field student-profile-field">
                   <label for="profileTeacher">Giáo viên phụ trách</label>
                   <input id="profileTeacher" name="teacher" type="text" placeholder="Ví dụ: Thầy Hiếu" />
                 </div>
@@ -1048,7 +1134,23 @@
                   <input id="profileTeacherPassword" name="teacherPassword" type="password" placeholder="Nhập admin" />
                 </div>
 
-                <div class="form-field full">
+                <div class="teacher-filter-note" id="teacherFilterNote">✅ Đã xác thực giáo viên. Chọn trường và lớp dựa trên dữ liệu học sinh đã nhập để xem đúng nhóm học sinh cần đánh giá.</div>
+
+                <div class="form-field teacher-filter-field" id="teacherFilterSchoolGroup">
+                  <label for="teacherFilterSchool">Trường</label>
+                  <select id="teacherFilterSchool" aria-label="Chọn trường để lọc học sinh">
+                    <option value="">Tất cả trường</option>
+                  </select>
+                </div>
+
+                <div class="form-field teacher-filter-field" id="teacherFilterClassGroup">
+                  <label for="teacherFilterClass">Lớp</label>
+                  <select id="teacherFilterClass" aria-label="Chọn lớp để lọc học sinh">
+                    <option value="">Tất cả lớp</option>
+                  </select>
+                </div>
+
+                <div class="form-field full student-profile-field">
                   <label for="profileGoal">Mục tiêu học tập hôm nay</label>
                   <textarea id="profileGoal" name="goal" placeholder="Ví dụ: Em muốn hiểu rõ cách dựng ảnh qua thấu kính hội tụ."></textarea>
                 </div>
@@ -1244,7 +1346,9 @@
     const TEACHER_INFO_KEY = "teacherInfo";
     const TEACHER_PASSWORD = "admin";
     const LEARNING_RECORDS_KEY = "khtn9_anh_sang_learning_records";
+    const STUDENT_ROSTER_KEY = "khtn9_anh_sang_student_roster";
     const ASSESSMENT_AUTH_KEY = "khtn9_anh_sang_teacher_assessment_auth";
+    const ASSESSMENT_FILTER_KEY = "khtn9_anh_sang_assessment_filter";
 
     /*
       Không đặt OpenAI API key trong index.html.
@@ -1349,6 +1453,29 @@
       };
     }
 
+    function rememberStudentProfile(profile) {
+      if (!profile || profile.role === "teacher") return;
+      const name = profile.name || "";
+      const className = profile.class || "";
+      const school = profile.school || "";
+      if (!name && !className && !school) return;
+      const roster = readJsonSafe(STUDENT_ROSTER_KEY, []);
+      const list = Array.isArray(roster) ? roster : [];
+      const studentKey = normalizeText(name + "|" + className + "|" + school);
+      const kept = list.filter(function(item) {
+        return normalizeText((item.name || "") + "|" + (item.class || item.className || "") + "|" + (item.school || "")) !== studentKey;
+      });
+      kept.push({
+        key: studentKey,
+        name: name,
+        class: className,
+        school: school,
+        teacher: profile.teacher || "",
+        updatedAt: new Date().toISOString()
+      });
+      writeJsonSafe(STUDENT_ROSTER_KEY, kept.slice(-500));
+    }
+
     function getStoredProfile() {
       try {
         const raw = localStorage.getItem(PROFILE_KEY);
@@ -1362,19 +1489,23 @@
     function writeCompatibleProfileKeys(profile) {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
 
-      const studentInfo = {
-        name: profile.name || "",
-        class: profile.class || "",
-        school: profile.school || ""
-      };
-      localStorage.setItem(STUDENT_INFO_KEY, JSON.stringify(studentInfo));
-      localStorage.setItem("khtn9_anh_sang_studentInfo", JSON.stringify(studentInfo));
+      if (profile.role !== "teacher") {
+        const studentInfo = {
+          name: profile.name || "",
+          class: profile.class || "",
+          school: profile.school || ""
+        };
+        localStorage.setItem(STUDENT_INFO_KEY, JSON.stringify(studentInfo));
+        localStorage.setItem("khtn9_anh_sang_studentInfo", JSON.stringify(studentInfo));
+        rememberStudentProfile(profile);
+      }
 
       const teacherInfo = {
         role: profile.role,
         teacher: profile.teacher || profile.name || "Thầy Hiếu",
         name: profile.name || "",
         school: profile.school || "",
+        class: profile.class || "",
         authenticated: !!profile.teacherAuthenticated,
         teacherPassword: profile.role === "teacher" ? profile.teacherPassword : ""
       };
@@ -1384,14 +1515,34 @@
 
     function saveUserProfile() {
       const profile = collectUserProfile();
-      if (!profile.name) { showToast("Em/thầy cô nhập họ tên trước nhé!", "warn"); return null; }
-      if (profile.role === "student" && !profile.class) { showToast("Học sinh nhớ nhập lớp để đồng bộ kết quả nhé!", "warn"); return null; }
-      if (!profile.school) { showToast("Nhập thêm tên trường để hồ sơ đầy đủ hơn nhé!", "warn"); return null; }
-      if (profile.role === "teacher" && profile.teacherPassword !== TEACHER_PASSWORD) {
-        showToast("Mật khẩu giáo viên chưa đúng. Vui lòng nhập: admin", "warn", 4200);
-        document.getElementById("profileTeacherPassword").focus();
-        return null;
+
+      if (profile.role === "teacher") {
+        if (profile.teacherPassword !== TEACHER_PASSWORD) {
+          showToast("Mật khẩu giáo viên chưa đúng. Vui lòng nhập: admin", "warn", 4200);
+          document.getElementById("profileTeacherPassword").focus();
+          return null;
+        }
+        const filter = getAssessmentFilterFromControls();
+        writeAssessmentFilter(filter);
+        profile.name = "Giáo viên";
+        profile.teacher = "Thầy Hiếu";
+        profile.school = filter.school || "";
+        profile.class = filter.className || "";
+        profile.teacherAuthenticated = true;
+        localStorage.setItem(ASSESSMENT_AUTH_KEY, "true");
+        writeCompatibleProfileKeys(profile);
+        updateTeacherPasswordVisibility();
+        renderGreeting(profile);
+        const saveMessage = document.getElementById("saveMessage");
+        saveMessage.classList.add("show");
+        setTimeout(function() { saveMessage.classList.remove("show"); }, 2600);
+        showToast("Đã mở chế độ giáo viên. Hãy chọn trường/lớp để xem đánh giá học sinh.", "success");
+        return profile;
       }
+
+      if (!profile.name) { showToast("Em nhập họ tên trước nhé!", "warn"); return null; }
+      if (!profile.class) { showToast("Học sinh nhớ nhập lớp để đồng bộ kết quả nhé!", "warn"); return null; }
+      if (!profile.school) { showToast("Nhập thêm tên trường để hồ sơ đầy đủ hơn nhé!", "warn"); return null; }
 
       writeCompatibleProfileKeys(profile);
       renderGreeting(profile);
@@ -1551,6 +1702,7 @@
         const key = normalizeText(name + "|" + studentClass + "|" + school);
         if (!studentMap.has(key)) {
           studentMap.set(key, {
+            key: key,
             name: name,
             className: studentClass,
             school: school,
@@ -1602,6 +1754,137 @@
       return { records, students, attempts, totalTime, avgScore };
     }
 
+
+    function getAssessmentFilter() {
+      const saved = readJsonSafe(ASSESSMENT_FILTER_KEY, { school: "", className: "" });
+      return {
+        school: saved && saved.school ? saved.school : "",
+        className: saved && saved.className ? saved.className : ""
+      };
+    }
+
+    function writeAssessmentFilter(filter) {
+      writeJsonSafe(ASSESSMENT_FILTER_KEY, {
+        school: filter && filter.school ? filter.school : "",
+        className: filter && filter.className ? filter.className : ""
+      });
+    }
+
+    function buildTeacherProfile(filter) {
+      filter = filter || getAssessmentFilter();
+      return {
+        role: "teacher",
+        name: "Giáo viên",
+        class: filter.className || "",
+        school: filter.school || "",
+        teacher: "Thầy Hiếu",
+        goal: "Theo dõi và đánh giá học sinh",
+        teacherPassword: TEACHER_PASSWORD,
+        teacherAuthenticated: true,
+        scope: "KHTN 9 - Kết nối tri thức - Chủ đề Ánh sáng",
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function getAssessmentFilterFromControls() {
+      const schoolSelect = document.getElementById("teacherFilterSchool");
+      const classSelect = document.getElementById("teacherFilterClass");
+      const filter = getAssessmentFilter();
+      return {
+        school: schoolSelect ? schoolSelect.value : filter.school,
+        className: classSelect ? classSelect.value : filter.className
+      };
+    }
+
+    function filterStudentsByTeacherChoice(students, filter) {
+      filter = filter || getAssessmentFilter();
+      return students.filter(function(student) {
+        const schoolOk = !filter.school || student.school === filter.school;
+        const classOk = !filter.className || student.className === filter.className;
+        return schoolOk && classOk;
+      });
+    }
+
+    function buildOptionHtml(value, label, selectedValue) {
+      return `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(label)}</option>`;
+    }
+
+    function populateTeacherFilterSelects() {
+      const schoolSelect = document.getElementById("teacherFilterSchool");
+      const classSelect = document.getElementById("teacherFilterClass");
+      if (!schoolSelect || !classSelect) return;
+
+      const data = getAssessmentSummary();
+      const saved = getAssessmentFilter();
+      const roster = readJsonSafe(STUDENT_ROSTER_KEY, []);
+      const studentInfo = readJsonSafe(STUDENT_INFO_KEY, null);
+      const rosterStudents = (Array.isArray(roster) ? roster : []).map(function(item) {
+        return { school: item.school || "", className: item.class || item.className || "" };
+      });
+      if (studentInfo && (studentInfo.school || studentInfo.class)) {
+        rosterStudents.push({ school: studentInfo.school || "", className: studentInfo.class || "" });
+      }
+      const sourceStudents = data.students.concat(rosterStudents);
+      const schools = Array.from(new Set(sourceStudents.map(function(s) { return s.school; }).filter(Boolean))).sort(function(a, b) { return a.localeCompare(b, "vi"); });
+      const selectedSchool = schools.includes(saved.school) ? saved.school : "";
+      const classSource = selectedSchool ? sourceStudents.filter(function(s) { return s.school === selectedSchool; }) : sourceStudents;
+      const classes = Array.from(new Set(classSource.map(function(s) { return s.className; }).filter(Boolean))).sort(function(a, b) { return a.localeCompare(b, "vi", { numeric: true }); });
+      const selectedClass = classes.includes(saved.className) ? saved.className : "";
+
+      schoolSelect.innerHTML = buildOptionHtml("", schools.length ? "Tất cả trường" : "Chưa có dữ liệu học sinh", selectedSchool) + schools.map(function(school) { return buildOptionHtml(school, school, selectedSchool); }).join("");
+      classSelect.innerHTML = buildOptionHtml("", classes.length ? "Tất cả lớp" : "Chưa có dữ liệu học sinh", selectedClass) + classes.map(function(className) { return buildOptionHtml(className, className, selectedClass); }).join("");
+      schoolSelect.value = selectedSchool;
+      classSelect.value = selectedClass;
+      writeAssessmentFilter({ school: selectedSchool, className: selectedClass });
+    }
+
+    function deleteStudentAssessmentData(studentKey) {
+      const data = getAssessmentSummary();
+      const student = data.students.find(function(item) { return item.key === studentKey; });
+      if (!student) {
+        showToast("Không tìm thấy dữ liệu học sinh cần xóa.", "warn");
+        return;
+      }
+      const ok = confirm("Xóa dữ liệu đánh giá của học sinh: " + student.name + " - " + (student.className || "chưa rõ lớp") + "? Dữ liệu đã xóa sẽ không thể khôi phục trên thiết bị này.");
+      if (!ok) return;
+
+      const records = readJsonSafe(LEARNING_RECORDS_KEY, []);
+      if (Array.isArray(records)) {
+        const kept = records.filter(function(record) {
+          return normalizeText(getStudentNameFromRecord(record) + "|" + getClassFromRecord(record) + "|" + getSchoolFromRecord(record)) !== studentKey;
+        });
+        writeJsonSafe(LEARNING_RECORDS_KEY, kept);
+      }
+
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith("quiz_")) continue;
+        const rows = readJsonSafe(key, []);
+        if (!Array.isArray(rows)) continue;
+        const keptRows = rows.filter(function(row) {
+          return normalizeText((row.studentName || row.name || "Chưa rõ tên") + "|" + (row.studentClass || row.class || "") + "|" + (row.studentSchool || row.school || "")) !== studentKey;
+        });
+        writeJsonSafe(key, keptRows);
+      }
+
+      const roster = readJsonSafe(STUDENT_ROSTER_KEY, []);
+      if (Array.isArray(roster)) {
+        const keptRoster = roster.filter(function(item) {
+          return normalizeText((item.name || "") + "|" + (item.class || item.className || "") + "|" + (item.school || "")) !== studentKey;
+        });
+        writeJsonSafe(STUDENT_ROSTER_KEY, keptRoster);
+      }
+      const currentStudentInfo = readJsonSafe(STUDENT_INFO_KEY, null);
+      if (currentStudentInfo && normalizeText((currentStudentInfo.name || "") + "|" + (currentStudentInfo.class || "") + "|" + (currentStudentInfo.school || "")) === studentKey) {
+        localStorage.removeItem(STUDENT_INFO_KEY);
+        localStorage.removeItem("khtn9_anh_sang_studentInfo");
+      }
+
+      renderGreeting(getStoredProfile());
+      updateTeacherPasswordVisibility();
+      showToast("Đã xóa dữ liệu đánh giá của học sinh đã chọn.", "success");
+    }
+
     function renderAssessmentLogin() {
       return `<div class="assessment-card" id="teacherAssessmentBox" data-auth="0">
         <h4>📋 Đánh giá HS</h4>
@@ -1615,8 +1898,10 @@
     }
 
     function renderAssessmentDashboard() {
-      const data = getAssessmentSummary();
-      const rows = data.students.slice(0, 40).map(function(student) {
+      const allData = getAssessmentSummary();
+      const filter = getAssessmentFilter();
+      const students = filterStudentsByTeacherChoice(allData.students, filter);
+      const rows = students.slice(0, 80).map(function(student) {
         const avg = student.avgScore == null ? "--" : student.avgScore.toFixed(1) + "/10";
         const best = student.bestScore == null ? "--" : student.bestScore + "/10";
         return `<tr>
@@ -1627,23 +1912,30 @@
           <td><span class="assessment-score">Cao nhất: ${best}</span></td>
           <td>${formatDuration(student.timeSpent)}</td>
           <td>${escapeHtml(student.latestTitle || "--")}<br><span style="color:#cbd5e1">${formatDateTime(student.latest)}</span></td>
+          <td><button type="button" class="assessment-delete-btn" data-delete-student="${escapeHtml(student.key)}">Xóa</button></td>
         </tr>`;
       }).join("");
 
-      const avgText = data.avgScore == null ? "--" : data.avgScore.toFixed(1);
+      const attempts = students.reduce(function(total, s) { return total + s.attempts; }, 0);
+      const totalTime = students.reduce(function(total, s) { return total + s.timeSpent; }, 0);
+      const scoreList = students.flatMap(function(s) { return s.scores; });
+      const avgScore = scoreList.length ? scoreList.reduce(function(a, b) { return a + b; }, 0) / scoreList.length : null;
+      const avgText = avgScore == null ? "--" : avgScore.toFixed(1);
+      const filterText = `Trường: ${filter.school ? escapeHtml(filter.school) : "Tất cả"} • Lớp: ${filter.className ? escapeHtml(filter.className) : "Tất cả"}`;
       return `<div class="assessment-card" id="teacherAssessmentBox" data-auth="1">
         <h4>📋 Đánh giá HS</h4>
         <p>Đang hiển thị dữ liệu học tập được đồng bộ trong trình duyệt: lượt mở bài, thời gian học và kết quả nộp bài.</p>
+        <div class="assessment-filter-info">🔎 Bộ lọc hiện tại: ${filterText}</div>
         <div class="assessment-stats">
-          <div class="assessment-stat"><strong>${data.students.length}</strong><span>học sinh</span></div>
-          <div class="assessment-stat"><strong>${data.attempts}</strong><span>lượt làm bài</span></div>
+          <div class="assessment-stat"><strong>${students.length}</strong><span>học sinh</span></div>
+          <div class="assessment-stat"><strong>${attempts}</strong><span>lượt làm bài</span></div>
           <div class="assessment-stat"><strong>${avgText}</strong><span>điểm TB</span></div>
-          <div class="assessment-stat"><strong>${formatDuration(data.totalTime)}</strong><span>tổng thời gian</span></div>
+          <div class="assessment-stat"><strong>${formatDuration(totalTime)}</strong><span>tổng thời gian</span></div>
         </div>
-        ${data.students.length ? `<div class="assessment-table-wrap"><table class="assessment-table"><thead><tr><th>Học sinh</th><th>Lớp</th><th>Tiến độ</th><th>Kết quả</th><th>Điểm tốt nhất</th><th>Thời gian học</th><th>Hoạt động gần nhất</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="assessment-empty">Chưa có dữ liệu học sinh. Khi học sinh mở bài/tương tác/nộp bài trong cùng bộ web, dữ liệu sẽ xuất hiện tại đây.</div>`}
+        ${students.length ? `<div class="assessment-table-wrap"><table class="assessment-table"><thead><tr><th>Học sinh</th><th>Lớp</th><th>Tiến độ</th><th>Kết quả</th><th>Điểm tốt nhất</th><th>Thời gian học</th><th>Hoạt động gần nhất</th><th>Xóa</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="assessment-empty">Chưa có dữ liệu học sinh phù hợp với trường/lớp đang chọn. Nếu học sinh chưa nhập thông tin học tập thì danh sách sẽ chưa xuất hiện.</div>`}
         <div class="assessment-actions">
           <button type="button" id="assessmentRefreshBtn">Làm mới</button>
-          <button type="button" class="secondary" id="assessmentExportBtn">Xuất JSON</button>
+          <button type="button" class="excel" id="assessmentExportBtn">Xuất Excel</button>
           <button type="button" class="secondary" id="assessmentLockBtn">Khóa bảng</button>
         </div>
       </div>`;
@@ -1656,13 +1948,14 @@
     function unlockAssessmentFromPassword(password) {
       if (password === TEACHER_PASSWORD) {
         localStorage.setItem(ASSESSMENT_AUTH_KEY, "true");
-        const profile = getStoredProfile();
-        if (profile && profile.role === "teacher") {
-          profile.teacherAuthenticated = true;
-          profile.teacherPassword = TEACHER_PASSWORD;
-          writeCompatibleProfileKeys(profile);
-        }
-        renderGreeting(getStoredProfile());
+        const roleSelect = document.getElementById("profileRole");
+        const passwordInput = document.getElementById("profileTeacherPassword");
+        if (roleSelect) roleSelect.value = "teacher";
+        if (passwordInput) passwordInput.value = TEACHER_PASSWORD;
+        const profile = buildTeacherProfile(getAssessmentFilter());
+        writeCompatibleProfileKeys(profile);
+        updateTeacherPasswordVisibility();
+        renderGreeting(profile);
         showToast("Đã mở bảng đánh giá học sinh.", "success");
         return true;
       }
@@ -1673,12 +1966,46 @@
     }
 
     function exportAssessmentData() {
-      const data = getAssessmentSummary();
-      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), summary: data }, null, 2)], { type: "application/json" });
+      const allData = getAssessmentSummary();
+      const filter = getAssessmentFilter();
+      const students = filterStudentsByTeacherChoice(allData.students, filter);
+      const rows = students.map(function(student, index) {
+        const avg = student.avgScore == null ? "" : student.avgScore.toFixed(1);
+        const best = student.bestScore == null ? "" : student.bestScore;
+        return `<tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(student.name)}</td>
+          <td>${escapeHtml(student.school || "")}</td>
+          <td>${escapeHtml(student.className || "")}</td>
+          <td>${student.completedItems}/${student.totalLearningItems}</td>
+          <td>${student.progress}%</td>
+          <td>${student.attempts}</td>
+          <td>${avg}</td>
+          <td>${best}</td>
+          <td>${formatDuration(student.timeSpent)}</td>
+          <td>${escapeHtml(student.latestTitle || "")}</td>
+          <td>${formatDateTime(student.latest)}</td>
+        </tr>`;
+      }).join("");
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+        <table border="1">
+          <thead>
+            <tr><th colspan="12">BẢNG ĐÁNH GIÁ HỌC SINH - KHTN 9 - CHỦ ĐỀ ÁNH SÁNG</th></tr>
+            <tr><th colspan="12">Trường: ${escapeHtml(filter.school || "Tất cả")} | Lớp: ${escapeHtml(filter.className || "Tất cả")} | Xuất lúc: ${formatDateTime(new Date().toISOString())}</th></tr>
+            <tr>
+              <th>STT</th><th>Học sinh</th><th>Trường</th><th>Lớp</th><th>Hoàn thành</th><th>Tiến độ</th><th>Lượt làm bài</th><th>Điểm TB</th><th>Điểm cao nhất</th><th>Thời gian học</th><th>Hoạt động gần nhất</th><th>Thời điểm</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="12">Chưa có dữ liệu phù hợp.</td></tr>`}</tbody>
+        </table>
+      </body></html>`;
+
+      const blob = new Blob(["\ufeff" + html], { type: "application/vnd.ms-excel;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "danh-gia-hoc-sinh-khtn9-anh-sang.json";
+      a.download = "danh-gia-hoc-sinh-khtn9-anh-sang.xls";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1708,17 +2035,41 @@
         card.innerHTML = `<h3>Xin chào nhà thám hiểm ánh sáng!</h3><p>Em có thể nhập thông tin trước để các web bài tập phân hóa nhận đúng tên, lớp, trường và vai trò. Khi học xong, kết quả sẽ “về đúng nhà”, không lạc như tia sáng đi sai pháp tuyến.</p>${renderTeacherAssessmentBox()}`;
         return;
       }
-      const roleText = profile.role === "teacher" ? "thầy/cô" : "em";
-      const authText = profile.role === "teacher" ? (profile.teacherAuthenticated ? "✅ Giáo viên đã xác thực bằng mật khẩu admin." : "⚠️ Giáo viên chưa xác thực mật khẩu.") : "✅ Hồ sơ học sinh đã sẵn sàng.";
+      if (profile.role === "teacher") {
+        const authText = profile.teacherAuthenticated ? "✅ Giáo viên đã xác thực bằng mật khẩu admin." : "⚠️ Giáo viên chưa xác thực mật khẩu.";
+        card.innerHTML = `<h3>Xin chào thầy/cô! 👋</h3><p>Chế độ giáo viên dùng để xem, lọc, xuất Excel và quản lý dữ liệu đánh giá học sinh theo trường/lớp đã chọn.</p><div class="mini-tip">${authText}</div>${renderTeacherAssessmentBox()}`;
+        return;
+      }
       const classText = profile.class ? " – Lớp " + escapeHtml(profile.class) : "";
-      card.innerHTML = `<h3>Xin chào ${escapeHtml(profile.name)}! 👋</h3><p>Hồ sơ của ${roleText} đã sẵn sàng${classText}. Khi mở bài tập hoặc thí nghiệm, web tổng sẽ truyền thông tin qua query string và lưu chung bằng các key đồng bộ.</p><div class="mini-tip">${authText}<br>🎯 Mục tiêu hôm nay: ${escapeHtml(profile.goal || "Chinh phục chủ đề Ánh sáng thật tự tin!")}</div>${renderTeacherAssessmentBox()}`;
+      card.innerHTML = `<h3>Xin chào ${escapeHtml(profile.name)}! 👋</h3><p>Hồ sơ của em đã sẵn sàng${classText}. Khi học xong, kết quả sẽ “về đúng nhà”, không lạc như tia sáng đi sai pháp tuyến.</p><div class="mini-tip">✅ Hồ sơ học sinh đã sẵn sàng.<br>🎯 Mục tiêu hôm nay: ${escapeHtml(profile.goal || "Chinh phục chủ đề Ánh sáng thật tự tin!")}</div>${renderTeacherAssessmentBox()}`;
     }
 
     function updateTeacherPasswordVisibility() {
       const role = document.getElementById("profileRole").value;
+      const isTeacher = role === "teacher";
       const group = document.getElementById("teacherPasswordGroup");
-      group.style.display = role === "teacher" ? "flex" : "none";
-      if (role !== "teacher") document.getElementById("profileTeacherPassword").value = "";
+      const passwordInput = document.getElementById("profileTeacherPassword");
+      const storedProfile = getStoredProfile();
+      const teacherAuthed = isTeacher && (passwordInput.value === TEACHER_PASSWORD || localStorage.getItem(ASSESSMENT_AUTH_KEY) === "true" || (storedProfile && storedProfile.role === "teacher" && storedProfile.teacherAuthenticated));
+
+      document.querySelectorAll(".student-profile-field").forEach(function(field) {
+        field.style.display = isTeacher ? "none" : "flex";
+      });
+      group.style.display = isTeacher ? "flex" : "none";
+      document.querySelectorAll(".teacher-filter-field").forEach(function(field) {
+        field.style.display = teacherAuthed ? "flex" : "none";
+      });
+      const note = document.getElementById("teacherFilterNote");
+      if (note) note.style.display = teacherAuthed ? "block" : "none";
+
+      if (!isTeacher) {
+        passwordInput.value = "";
+        localStorage.removeItem(ASSESSMENT_AUTH_KEY);
+      } else if (teacherAuthed) {
+        passwordInput.value = TEACHER_PASSWORD;
+        localStorage.setItem(ASSESSMENT_AUTH_KEY, "true");
+        populateTeacherFilterSelects();
+      }
     }
 
     function renderTheoryItems() {
@@ -1924,20 +2275,57 @@
 
       document.getElementById("userProfileForm").addEventListener("submit", function(event) { event.preventDefault(); saveUserProfile(); });
       document.getElementById("clearProfileBtn").addEventListener("click", clearUserProfile);
-      document.getElementById("profileRole").addEventListener("change", updateTeacherPasswordVisibility);
+      document.getElementById("profileRole").addEventListener("change", function() {
+        updateTeacherPasswordVisibility();
+        const current = getStoredProfile();
+        if (document.getElementById("profileRole").value === "teacher") {
+          renderGreeting(current && current.role === "teacher" ? current : null);
+        } else {
+          renderGreeting(current && current.role !== "teacher" ? current : null);
+        }
+      });
+      document.getElementById("profileTeacherPassword").addEventListener("input", function(event) {
+        if (document.getElementById("profileRole").value === "teacher" && event.target.value === TEACHER_PASSWORD) {
+          localStorage.setItem(ASSESSMENT_AUTH_KEY, "true");
+          const profile = buildTeacherProfile(getAssessmentFilter());
+          writeCompatibleProfileKeys(profile);
+          updateTeacherPasswordVisibility();
+          renderGreeting(profile);
+          showToast("Đã xác thực giáo viên. Mời chọn trường và lớp để xem dữ liệu học sinh.", "success", 2600);
+        } else {
+          updateTeacherPasswordVisibility();
+        }
+      });
+      document.getElementById("teacherFilterSchool").addEventListener("change", function() {
+        const school = this.value;
+        writeAssessmentFilter({ school: school, className: "" });
+        populateTeacherFilterSelects();
+        const profile = buildTeacherProfile(getAssessmentFilter());
+        writeCompatibleProfileKeys(profile);
+        renderGreeting(profile);
+      });
+      document.getElementById("teacherFilterClass").addEventListener("change", function() {
+        const current = getAssessmentFilter();
+        writeAssessmentFilter({ school: current.school, className: this.value });
+        const profile = buildTeacherProfile(getAssessmentFilter());
+        writeCompatibleProfileKeys(profile);
+        renderGreeting(profile);
+      });
 
       document.getElementById("helloCard").addEventListener("click", function(event) {
         const loginBtn = event.target.closest("#assessmentLoginBtn");
         const refreshBtn = event.target.closest("#assessmentRefreshBtn");
         const lockBtn = event.target.closest("#assessmentLockBtn");
         const exportBtn = event.target.closest("#assessmentExportBtn");
+        const deleteBtn = event.target.closest("[data-delete-student]");
         if (loginBtn) {
           const input = document.getElementById("assessmentPassword");
-          unlockAssessmentFromPassword(input ? input.value : "");
+          if (unlockAssessmentFromPassword(input ? input.value : "")) updateTeacherPasswordVisibility();
         }
-        if (refreshBtn) renderGreeting(getStoredProfile());
-        if (lockBtn) { localStorage.removeItem(ASSESSMENT_AUTH_KEY); renderGreeting(getStoredProfile()); showToast("Đã khóa bảng đánh giá.", "success"); }
+        if (refreshBtn) { populateTeacherFilterSelects(); renderGreeting(document.getElementById("profileRole").value === "teacher" ? buildTeacherProfile(getAssessmentFilter()) : getStoredProfile()); showToast("Đã làm mới bảng đánh giá.", "success"); }
+        if (lockBtn) { localStorage.removeItem(ASSESSMENT_AUTH_KEY); updateTeacherPasswordVisibility(); renderGreeting(getStoredProfile()); showToast("Đã khóa bảng đánh giá.", "success"); }
         if (exportBtn) exportAssessmentData();
+        if (deleteBtn) deleteStudentAssessmentData(deleteBtn.dataset.deleteStudent);
       });
       document.getElementById("helloCard").addEventListener("keydown", function(event) {
         if (event.key === "Enter" && event.target && event.target.id === "assessmentPassword") {

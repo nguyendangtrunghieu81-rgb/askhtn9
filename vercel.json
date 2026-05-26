@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/chatbot-anh-sang.js": {
+      "maxDuration": 30
+    }
+  }
+}
